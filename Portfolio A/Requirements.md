@@ -7,7 +7,7 @@
 - Luca Greca: Project director
 
 ## Use-case Diagram
-![](https://github.com/MaxTheWhale/firefox-extensions-ecosystem/tree/master/Portfolio%20A/use-case%20diagram.jpg)
+![use-case diagram](use-case%20diagram.jpg)
 
 ## Flow Steps
 ### Storing a file to a cloud
