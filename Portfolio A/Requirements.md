@@ -68,14 +68,14 @@ If the user has already logged in before and got the token, skip the first two s
 #### Exceptional flow
 If the token fails to verify, ask for another log in. 
 
-## Requirments
+## Requirements
 ### Functional Requirements
-1.	Shall provide funtions to store, delete and fetch files from cloud.
+1.	Shall provide functions to store, delete and fetch files from cloud.
 2.	Shall lift the cap of data that can be stored by 'storage.local'.
 3.	Shall be an interface viable to all cloud providers, i.e. Google Drive, OneDrive, etc.
 4.	Shall at least mimic functions currently exist in 'Browser.storage.local', potentially implement more features.
 5.	The repository needs to be repeatedly accessible despite any situations happen to the system.
-6. Shall proceed an authentication check before makeing any actions to the cloud.
+6.  Shall proceed an authentication check before making any actions to the cloud.
 
 ### Non-Functional Requirements
 1.	Should ensure secure data transmission.
