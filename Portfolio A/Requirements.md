@@ -77,7 +77,7 @@ If the token fails to verify, ask for another log in.
 5.	The repository needs to be repeatedly accessible despite any situations happen to the system.
 6. Shall proceed an authentication check before makeing any actions to the cloud.
 
-###Non-Functional Requirements
+### Non-Functional Requirements
 1.	Should ensure secure data transmission.
 2.	Should be implemented using Javascript.
 3.	Should minimise the operations needed between instructions given and doing the actual upload/download processes.
