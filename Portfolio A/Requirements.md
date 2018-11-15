@@ -1,17 +1,17 @@
-#Requirements
-##Stakeholders 
+# Requirements
+## Stakeholders 
 - Browser extension users: The final users of our product, wrapped in other extensions
 - Cloud providers: Direct users of the API
 - Firefox developers: Possible users of the API
 - Rob Wu: Project director
 - Luca Greca: Project director
 
-##Use-case Diagram
-![](https://github.com/MaxTheWhale/firefox-extensions-ecosystem/tree/master/Portfolio%20A/use-case%20diagram)
+## Use-case Diagram
+![](https://github.com/MaxTheWhale/firefox-extensions-ecosystem/tree/master/Portfolio%20A/use-case%20diagram.jpg)
 
-##Flow Steps
-###Storing a file to a cloud
-####Basic flow
+## Flow Steps
+### Storing a file to a cloud
+#### Basic flow
 1. Select a cloud service. 
 2. Log in to the cloud service and get a token for verification.
 3. Verify the token for authentication. 
@@ -20,16 +20,16 @@
 6. Cloud server confirms action complete. 
 7. Return a success message. 
 
-####Alternative flow
+#### Alternative flow
 If the user has already logged in before and got the token, skip the first two steps. 
 
-####Exceptional flow
+#### Exceptional flow
 If the token fails to verify, ask for another log in. 
 
 ------------------------------------------
 
-###Deleting a file from a cloud
-####Basic flow
+### Deleting a file from a cloud
+#### Basic flow
 1. Select a cloud service. 
 2. Log in to the cloud service and get a token for verification.
 3. Verify the token for authentication. 
@@ -41,18 +41,18 @@ If the token fails to verify, ask for another log in.
 9. Cloud confirms action complete.
 10. Return a success message. 
 
-####Alternative flow
+#### Alternative flow
 If the user has already logged in before and got the token, skip the first two steps. 
 
 If the user selects "No" when confirming, halt the process. 
 
-####Exceptional flow
+#### Exceptional flow
 If the token fails to verify, ask for another log in. 
 
 -----------------------------------------
 
-###Fetching a file from a cloud
-####Basic flow
+### Fetching a file from a cloud
+#### Basic flow
 1. Select a cloud service. 
 2. Log in to the cloud service and get a token for verification.
 3. Verify the token for authentication. 
@@ -62,14 +62,14 @@ If the token fails to verify, ask for another log in.
 7. Send pull request to cloud. 
 8. Cloud sends the file.
 
-####Alternative flow
+#### Alternative flow
 If the user has already logged in before and got the token, skip the first two steps. 
 
-####Exceptional flow
+#### Exceptional flow
 If the token fails to verify, ask for another log in. 
 
-##Requirments
-###Functional Requirements
+## Requirments
+### Functional Requirements
 1.	Shall provide funtions to store, delete and fetch files from cloud.
 2.	Shall lift the cap of data that can be stored by 'storage.local'.
 3.	Shall be an interface viable to all cloud providers, i.e. Google Drive, OneDrive, etc.
