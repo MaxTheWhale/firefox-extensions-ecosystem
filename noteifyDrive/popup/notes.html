@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset = "utf-8">
+        <link rel = "stylesheet" href = "notes.css">
+    </head>
+
+    <body class>
+
+        <div id="transparent-wrapper"></div>
+        <div id="login-box">
+            <p>Please login on your google account.</p>
+            <div class="button login">Log-in</div>
+        </div>
+
+        <div id = "popup" class = "hidden">
+            <div id = "title">Note</div>
+            <textarea id = "input"></textarea>
+            <div class = "button save">Save</div>
+            <div class = "button clear">Clear</div>
+        </div>
+
+        <div id = "error" class = "hidden">
+            <p>Error with noteify</p>
+        </div>
+
+        <!-- <script src = "https://apis.google.com/js/api.js"></script> -->
+        <script defer src="api.js"></script>
+        <script defer src = "client2.js"></script>
+        <!-- <script defer src = "auth2.js"></script> -->
+        <script defer src = "notes.js"></script>
+        <!-- <script src = "notes.js"></script> -->
+        <!-- <script defer src="https://apis.google.com/js/api.js" 
+            onload="this.onload=function(){};handleClientLoad()"
+            onreadystatechange="if (this.readyState === 'complete') this.onload()">
+        </script> -->
+    </body>
+
+</html>
