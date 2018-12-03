@@ -39,7 +39,7 @@ Ideally, interfacing with the API should be as simple as choosing a cloud
 provider, calling an authenticate function, and then making calls. All token 
 acquistion and refresh should be handled silently, where possible.
 
-let remoteStore = createRemoteStorage("Google"); // Initialises object
+let remoteStore = createRemoteStorage("Google", clientId); // Initialises object
 remoteStore.authenticate(); // Starts auth-flow
 
 remoteStore.upload(fileName, object); // Upload an object as fileName
