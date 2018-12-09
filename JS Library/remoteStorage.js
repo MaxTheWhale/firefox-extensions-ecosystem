@@ -21,6 +21,9 @@ const ONEDRIVE_AUTH_URL =
 const ONEDRIVE_VALIDATION_URL = "https://graph.microsoft.com/v1.0/me/drive/";
 
 let googleDriveStorage = {
+  accessToken: null,
+  fileNames: null,
+  fileIDs: null,
   extractAccessToken: function (redirectUri) {
     let m = redirectUri.match(/[#?](.*)/);
     if (!m || m.length < 1)
@@ -30,7 +33,7 @@ let googleDriveStorage = {
   },
 
   validate: function (redirectURL) {
-    const accessToken = extractAccessToken(redirectURL);
+    this.accessToken = extractAccessToken(redirectURL);
     if (!accessToken) {
       throw "Authorization failure";
     }
@@ -68,10 +71,41 @@ let googleDriveStorage = {
     return authorize().then(validate);
   },
 
-  uploadFile: function(accessToken, file) {
+  getFileList: function() {
+    let names = browser.storage.local.get(googleDriveFileNames);
+    names.then(res => {
+        this.fileNames = res;
+      }).catch(err => {
+        this.fileNames = [];
+      });
+    let ids = browser.storage.local.get(googleDriveFileIDs);
+    ids.then(res => {
+        this.fileIDs = res;
+      }).catch(err => {
+        this.fileIDs = [];
+      });
+  },
+
+  upload: function(fileName, obj) {
+    if (this.fileNames.includes(fileName)) {
+      this.simpleUpload(this.accessToken, obj).then(response => {
+        this.fileNames.push(fileName);
+        this.fileIDs.push(response.id);
+        browser.storage.local.set({googleDriveFileNames: this.fileNames});
+        browser.storage.local.set({googleDriveFileIDs: this.fileIDs});
+      }).catch(err => {
+        // ERROR HANDLING
+      });
+    }
+    else {
+      // Multipart/resumable upload with same id as in list
+    }
+  },
+
+  simpleUpload: function(token, file) {
     const requestURL = GDRIVE_UPLOAD_URL;
     const requestHeaders = new Headers();
-    requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+    requestHeaders.append('Authorization', 'Bearer ' + token);
     requestHeaders.append('Content-Type', 'application/octet-stream');
     requestHeaders.append('Content-Length', file.length);
     const driveRequest = new Request(requestURL, {
@@ -92,6 +126,9 @@ let googleDriveStorage = {
 
 
 let oneDriveStorage = {
+  accessToken: null,
+  fileNames: null,
+  fileIDs: null,
   extractAccessToken: function (redirectUri) {
     let m = redirectUri.match(/[#?](.*)/);
     if (!m || m.length < 1)
@@ -101,7 +138,7 @@ let oneDriveStorage = {
   },
 
   validate: function (redirectURL) {
-    const accessToken = extractAccessToken(redirectURL);
+    this.accessToken = extractAccessToken(redirectURL);
     if (!accessToken) {
       throw "Authorization failure";
     }
@@ -136,7 +173,18 @@ let oneDriveStorage = {
     return authorize().then(validate);
   },
 
-  uploadFile: function(accessToken, file) {
-    
+  getFileList: function() {
+    let names = browser.storage.local.get(oneDriveFileNames);
+    names.then(res => {
+        this.fileNames = res;
+      }).catch(err => {
+        this.fileNames = [];
+      });
+    let ids = browser.storage.local.get(oneDriveFileIDs);
+    ids.then(res => {
+        this.fileIDs = res;
+      }).catch(err => {
+        this.fileIDs = [];
+      });
   }
 }
