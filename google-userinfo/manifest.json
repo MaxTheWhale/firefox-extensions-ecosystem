@@ -16,10 +16,13 @@
   
     "browser_action": {
       "browser_style": true,
-      "default_icon": "icons/person-32.png"
+      "default_icon": "icons/person-32.png",
+      "default_title": "Drive",
+      "default_popup": "popup/drive.html"
     },
   
     "permissions": [
+      "tabs",
       "identity",
       "notifications",
       "*://www.googleapis.com/*",
@@ -27,11 +30,7 @@
     ],
   
     "background": {
-      "scripts": [
-        "background/authorize.js",
-        "background/userinfo.js",
-        "background/main.js"
-      ]
+      "page": "background/back.html"
     },
   
     "options_ui": {

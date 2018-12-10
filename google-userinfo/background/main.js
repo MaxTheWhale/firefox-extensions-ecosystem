@@ -1,3 +1,6 @@
+//Skeleton for files in background from: https://github.com/mdn/webextensions-examples/tree/master/google-userinfo
+//Original modification for use with drive apis from: https://github.com/MaxTheWhale
+
 /*global getAccessToken*/
 
 function notifyUser(user) {
@@ -19,7 +22,6 @@ function notifyUser(user) {
   */
   browser.browserAction.onClicked.addListener(() => {
     getAccessToken()
-      .then(getUserInfo)
-      .then(notifyUser)
+      .then((token) => {uploadFile(token, "This is a test file.").then(console.log);})
       .catch(logError);
   });
