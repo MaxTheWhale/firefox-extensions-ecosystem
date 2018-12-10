@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "Remote Storage Test",
+    "version": "0.1.0",
+    "browser_action": {
+      "default_title": "Remote Storage Test",
+      "default_popup": "popup.html"
+    },
+    "permissions": ["storage", "identity", "*://www.googleapis.com/*", "*://accounts.google.com/*"],
+    "background": {
+      "scripts": [ "remoteStorage.js" ]
+    },
+    "applications": {
+      "gecko": {
+        "id": "{060d305e-f847-42e5-8d5c-676d078aa080}",
+        "strict_min_version": "52.0"
+      }
+    }
+  }
