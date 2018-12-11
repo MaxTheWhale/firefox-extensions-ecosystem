@@ -87,6 +87,8 @@ async function makePopup() {
   let remoteStore = await background.createRemoteStorage("Google", "887401722713-n61d7cl8o92cjol2sid7q31t9gs28uqs.apps.googleusercontent.com");
   const hostElem = document.getElementById("googleDrive");
 
+  console.log(await remoteStore.getInfo("test.txt"));
+
   let files = await remoteStore.getInfo();
   Object.keys(files).forEach(element => {
     const listItem = document.createElement("li");

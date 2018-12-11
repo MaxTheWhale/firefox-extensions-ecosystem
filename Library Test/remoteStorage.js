@@ -203,6 +203,27 @@ class GoogleStorage {
       }
     }
 
+    async function getMetadata(accessToken, id) {
+      let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
+      let requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+
+      let driveRequest = new Request(requestURL, {
+        method: "GET",
+        headers: requestHeaders
+      });
+    
+      let response = await fetch(driveRequest)
+      if (response.status === 200) {
+        console.log("yuh");
+        return response.json();
+      }
+      else {
+        console.log("nuh");
+        throw response.status;
+      }
+    }
+
     async function download(accessToken, url) {
       let requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + accessToken);
@@ -255,12 +276,13 @@ class GoogleStorage {
     }
 
     this.getInfo = async (fileName) => {
+      let accessToken = await getAccessToken();
       if (fileName === undefined) {
         return fileList;
       }
       else {
         if (fileList[fileName] !== undefined) {
-          return fileName;
+          return await getMetadata(accessToken, fileList[fileName]);
         }
         else {
           throw "No such file";
@@ -270,18 +292,76 @@ class GoogleStorage {
   }
 }
 
-async function newGoogleStorage(client_id) {
-  let googleStorage = new GoogleStorage(client_id);
-  await googleStorage.init();
-  return googleStorage;
+class OneDriveStorage {
+  constructor(client_id) {
+    // PRIVATE PROPERTIES
+    let scopes = ["Files.ReadWrite"];
+    let auth_url =
+      `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
+    let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
+    let fileList = {};
+
+    // PRIVATE METHODS
+    function extractAccessToken(redirectUri) {
+      let m = redirectUri.match(/[#?](.*)/);
+      if (!m || m.length < 1)
+        return null;
+      let params = new URLSearchParams(m[1].split("#")[0]);
+      return params.get("access_token");
+    }
+  
+    async function validate(redirectURL) {
+      let accessToken = extractAccessToken(redirectURL);
+      if (!accessToken) {
+        throw "Authorization failure";
+      }
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+      const validationRequest = new Request(validation_url, {
+        method: "GET",
+        headers: requestHeaders
+      });
+  
+      let response = await fetch(validationRequest);
+      if (response.status === 200) {
+        return accessToken;
+      }
+      else {
+        throw "Token validation failed";
+      }
+    }
+  
+    function authorize() {
+      return browser.identity.launchWebAuthFlow({
+        interactive: true,
+        url: auth_url
+      });
+    }
+    
+    function getAccessToken() {
+      return authorize().then(validate);
+    }
+
+    // PUBLIC METHODS
+    this.init = async () => {
+      let files = await browser.storage.local.get("onedriveFiles")
+      if (files.onedriveFiles !== undefined) {
+        fileList = files.onedriveFiles;
+      }
+    }
+  }
 }
 
 async function createRemoteStorage(storageProvider, client_id) {
   if (storageProvider.toLowerCase() === "google") {
-    return await newGoogleStorage(client_id);
+    let googleStorage = new GoogleStorage(client_id);
+    await googleStorage.init();
+    return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
-    return await oneDriveStorage(client_id);
+    let onedriveStorage = new OneDriveStorage(client_id);
+    await onedriveStorage.init();
+    return onedriveStorage;
   }
   else {
     throw "No such storage provider";
