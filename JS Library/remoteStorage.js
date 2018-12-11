@@ -102,7 +102,7 @@ class GoogleStorage {
           if (response.status === 200) {
             resolve(response);
           } else {
-            console.log("Upload initialisation failed");
+            console.log("Upload initialization failed");
             reject(response.status);
           }
         });

@@ -82,10 +82,7 @@ gettingStoredStats.then(results => {
   addHTTPSPercentage(results.protocol);
 });*/
 
-async function googleStore() {
-  let background = await browser.runtime.getBackgroundPage();
-  let remoteStore = await background.createRemoteStorage("Google", "887401722713-n61d7cl8o92cjol2sid7q31t9gs28uqs.apps.googleusercontent.com");
-  const hostElem = document.getElementById("googleDrive");
+async function storageInterface(hostElem, remoteStore) {
   while (hostElem.firstChild) {
     hostElem.removeChild(hostElem.firstChild);
   }
@@ -113,48 +110,18 @@ async function googleStore() {
   hostElem.appendChild(downBtn);
 }
 
-async function onedriveStore() {
-  let background = await browser.runtime.getBackgroundPage();
-  let remoteStore = await background.createRemoteStorage("OneDrive", "1fe91dbd-fcd7-4f15-9674-1ae6d9e28ba1");
-  const hostElem = document.getElementById("oneDrive");
-  while(hostElem.firstChild) {
-    hostElem.removeChild(hostElem.firstChild);
-  }
-
-  let files = await remoteStore.getInfo();
-  Object.keys(files).forEach(element => {
-    const listItem = document.createElement("li");
-    listItem.textContent = element;
-    hostElem.appendChild(listItem);
-  });
-
-  const upBtn = document.createElement("button");
-  upBtn.textContent = "Upload";
-  upBtn.onclick = async function() {
-    await remoteStore.uploadFile("This is a test file", "test.txt");
-  };
-  hostElem.appendChild(upBtn);
-
-  const downBtn = document.createElement("button");
-  downBtn.textContent = "Download";
-  downBtn.onclick = async function() {
-    let file = await remoteStore.downloadFile("test.txt");
-    console.log(file);
-  };
-  hostElem.appendChild(downBtn);
-}
-
 async function makePopup() {
+  let background = await browser.runtime.getBackgroundPage();
   const googleElem = document.getElementById("googleDrive");
   const googleSignIn = document.createElement("button");
   googleSignIn.textContent = "Sign In";
-  googleSignIn.onclick = googleStore;
+  googleSignIn.onclick = async () => { let googleStore = await background.getGoogleStore(); storageInterface(googleElem, googleStore)};
   googleElem.appendChild(googleSignIn);
 
   const onedriveElem = document.getElementById("oneDrive");
   const onedriveSignIn = document.createElement("button");
   onedriveSignIn.textContent = "Sign In";
-  onedriveSignIn.onclick = onedriveStore;
+  onedriveSignIn.onclick = async () => { let onedriveStore = await background.getOneDriveStore(); storageInterface(onedriveElem, onedriveStore)};
   onedriveElem.appendChild(onedriveSignIn);
 }
 makePopup();
