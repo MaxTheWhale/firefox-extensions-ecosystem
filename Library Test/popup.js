@@ -82,17 +82,31 @@ gettingStoredStats.then(results => {
   addHTTPSPercentage(results.protocol);
 });*/
 
-console.log(browser.identity.getRedirectURL());
-const hostElem = document.getElementById("googleDrive");
-const authBtn = document.createElement("button");
-authBtn.textContent = "Authorise";
-var remoteStore;
-authBtn.onclick = async function() {
+async function makePopup() {
   let background = await browser.runtime.getBackgroundPage();
   let remoteStore = await background.createRemoteStorage("Google", "887401722713-n61d7cl8o92cjol2sid7q31t9gs28uqs.apps.googleusercontent.com");
-  //let token = await remoteStore.getAccessToken();
-  //console.log(token);
-  await remoteStore.uploadFile("This is a test file", "test.txt");
-  await remoteStore.uploadFile("This should have replaced it", "test.txt");
-};
-hostElem.appendChild(authBtn);
+  const hostElem = document.getElementById("googleDrive");
+
+  let files = await remoteStore.getInfo();
+  Object.keys(files).forEach(element => {
+    const listItem = document.createElement("li");
+    listItem.textContent = element;
+    hostElem.appendChild(listItem);
+  });
+
+  const upBtn = document.createElement("button");
+  upBtn.textContent = "Upload";
+  upBtn.onclick = async function() {
+    await remoteStore.uploadFile("This is a test file", "test.txt");
+  };
+  hostElem.appendChild(upBtn);
+
+  const downBtn = document.createElement("button");
+  downBtn.textContent = "Download";
+  downBtn.onclick = async function() {
+    let file = await remoteStore.downloadFile("test.txt");
+    console.log(file);
+  };
+  hostElem.appendChild(downBtn);
+}
+makePopup();
