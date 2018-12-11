@@ -8,7 +8,7 @@
     },
     "permissions": ["storage", "identity", "*://www.googleapis.com/*", "*://accounts.google.com/*"],
     "background": {
-      "scripts": [ "remoteStorage.js" ]
+      "scripts": [ "graph-js-sdk-web.js", "remoteStorage.js" ]
     },
     "applications": {
       "gecko": {

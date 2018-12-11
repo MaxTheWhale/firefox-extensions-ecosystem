@@ -1,74 +1,5 @@
 const REDIRECT_URL = browser.identity.getRedirectURL();
 
-function oneDriveStorage(client_id) {
-  this.scopes = ["Files.ReadWrite"];
-  this.auth_url =
-  `https://login.microsoftonline.com/common/oauth2/v2.0/authorize\
-    ?client_id=${client_id}\
-    &response_type=token\
-    &redirect_uri=${encodeURIComponent(REDIRECT_URL)}\
-    &scope=${encodeURIComponent(scopes.join(' '))}`;
-  this.validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
-
-  this.extractAccessToken = function(redirectUri) {
-    let m = redirectUri.match(/[#?](.*)/);
-    if (!m || m.length < 1)
-      return null;
-    let params = new URLSearchParams(m[1].split("#")[0]);
-    return params.get("access_token");
-  },
-
-  this.validate = function(redirectURL) {
-    this.accessToken = extractAccessToken(redirectURL);
-    if (!accessToken) {
-      throw "Authorization failure";
-    }
-    const requestHeaders = new Headers();
-    requestHeaders.append('Authorization', 'Bearer ' + accessToken);
-    const validationRequest = new Request(validation_url, {
-      method: "GET",
-      headers: requestHeaders
-    });
-
-    function checkResponse(response) {
-      return new Promise((resolve, reject) => {
-        if (response.status === 200) {
-          resolve(accessToken);
-        }
-        else reject("Token validation error");
-      });
-    }
-
-    return fetch(validationRequest).then(checkResponse);
-  },
-
-  this.authorize = function() {
-    return browser.identity.launchWebAuthFlow({
-      interactive: true,
-      url: auth_url
-    });
-  },
-  
-  this.getAccessToken = function() {
-    return authorize().then(validate);
-  },
-
-  this.getFileList = function() {
-    let names = browser.storage.local.get(oneDriveFileNames);
-    names.then(res => {
-        this.fileNames = res;
-      }).catch(err => {
-        this.fileNames = [];
-      });
-    let ids = browser.storage.local.get(oneDriveFileIDs);
-    ids.then(res => {
-        this.fileIDs = res;
-      }).catch(err => {
-        this.fileIDs = [];
-      });
-  }
-}
-
 class GoogleStorage {
   constructor(client_id) {
     // PRIVATE PROPERTIES
@@ -126,12 +57,11 @@ class GoogleStorage {
     
         fetch(driveRequest).then((response) => {
           if (response.status === 200) {
-            console.log("yuh");
             response.json().then((data) => {
               resolve(data.ids[0]);
             });
           } else {
-            console.log("nuh");
+            console.log("ID acquisition failed");
             reject(response.status);
           }
         });
@@ -170,10 +100,9 @@ class GoogleStorage {
     
         fetch(driveRequest).then((response) => {
           if (response.status === 200) {
-            console.log("yuh");
             resolve(response);
           } else {
-            console.log("nuh");
+            console.log("Upload initialisation failed");
             reject(response.status);
           }
         });
@@ -194,11 +123,30 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (response.status === 200) {
-        console.log("yuh");
         return response.json();
       }
       else {
-        console.log("nuh");
+        console.log("Upload failed");
+        throw response.status;
+      }
+    }
+
+    async function getMetadata(accessToken, id) {
+      let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
+      let requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+
+      let driveRequest = new Request(requestURL, {
+        method: "GET",
+        headers: requestHeaders
+      });
+    
+      let response = await fetch(driveRequest)
+      if (response.status === 200) {
+        return response.json();
+      }
+      else {
+        console.log("Getting Metadata failed");
         throw response.status;
       }
     }
@@ -213,11 +161,10 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (response.status === 200) {
-        console.log("yuh");
         return response.blob();
       }
       else {
-        console.log("nuh");
+        console.log("Download failed");
         throw response.status;
       }
     }
@@ -255,12 +202,13 @@ class GoogleStorage {
     }
 
     this.getInfo = async (fileName) => {
+      let accessToken = await getAccessToken();
       if (fileName === undefined) {
         return fileList;
       }
       else {
         if (fileList[fileName] !== undefined) {
-          return fileName;
+          return await getMetadata(accessToken, fileList[fileName]);
         }
         else {
           throw "No such file";
@@ -270,18 +218,137 @@ class GoogleStorage {
   }
 }
 
-async function newGoogleStorage(client_id) {
-  let googleStorage = new GoogleStorage(client_id);
-  await googleStorage.init();
-  return googleStorage;
+class OneDriveStorage {
+  constructor(client_id) {
+    // PRIVATE PROPERTIES
+    let scopes = ["Files.ReadWrite"];
+    let auth_url =
+      `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
+    let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
+    let fileList = {};
+    let token = "";
+
+    // PRIVATE METHODS
+    function extractAccessToken(redirectUri) {
+      let m = redirectUri.match(/[#?](.*)/);
+      if (!m || m.length < 1)
+        return null;
+      let params = new URLSearchParams(m[1].split("#")[0]);
+      return params.get("access_token");
+    }
+  
+    async function validate(redirectURL) {
+      let accessToken = extractAccessToken(redirectURL);
+      if (!accessToken) {
+        throw "Authorization failure";
+      }
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+      const validationRequest = new Request(validation_url, {
+        method: "GET",
+        headers: requestHeaders
+      });
+  
+      let response = await fetch(validationRequest);
+      if (response.status === 200) {
+        return accessToken;
+      }
+      else {
+        throw "Token validation failed";
+      }
+    }
+  
+    function authorize() {
+      return browser.identity.launchWebAuthFlow({
+        interactive: true,
+        url: auth_url
+      });
+    }
+    
+    function getAccessToken() {
+      return authorize().then(validate);
+    }
+
+    async function getMetadata(id) {
+      var client = MicrosoftGraph.Client.init({
+        authProvider: (done) => {
+          done(null, token); //first parameter takes an error if you can't get an access token
+      }
+      });
+      return await client.api(`me/drive/items/${id}`).get();
+    }
+
+    async function upload(file, name) {
+      var client = MicrosoftGraph.Client.init({
+        authProvider: (done) => {
+          done(null, token); //first parameter takes an error if you can't get an access token
+      }
+      });
+      let response = await client.api(`/me/drive/root/children/${name}/content`).put(file);
+      return response;
+    };
+
+    async function download(fileName) {
+      var client = MicrosoftGraph.Client.init({
+        authProvider: (done) => {
+          done(null, token); //first parameter takes an error if you can't get an access token
+      }
+      });
+      let fileInfo = await client.api(`/me/drive/root/children/${fileName}`).get();
+      let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
+      return await response.blob();
+    };
+
+
+    // PUBLIC METHODS
+    this.init = async () => {
+      let files = await browser.storage.local.get("onedriveFiles")
+      if (files.onedriveFiles !== undefined) {
+        fileList = files.onedriveFiles;
+      }
+      token = await getAccessToken();
+    }
+
+    this.uploadFile = async (file, name) => {
+      let response = await upload(file, name);
+      fileList[name] = response.id;
+      await browser.storage.local.set({onedriveFiles: fileList});
+    }
+
+    this.downloadFile = async (fileName) => {
+      let id = fileList[fileName];
+      if (id === undefined) {
+        throw "No such file";
+      }
+      return await download(fileName);
+    }
+
+    this.getInfo = async (fileName) => {
+      if (fileName === undefined) {
+        return fileList;
+      }
+      else {
+        if (fileList[fileName] !== undefined) {
+          return await getMetadata(fileList[fileName]);
+        }
+        else {
+          throw "No such file";
+        }
+      }
+    }
+  }
 }
 
 async function createRemoteStorage(storageProvider, client_id) {
   if (storageProvider.toLowerCase() === "google") {
-    return await newGoogleStorage(client_id);
+    let googleStorage = new GoogleStorage(client_id);
+    await googleStorage.init();
+    return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
-    return await oneDriveStorage(client_id);
+    let onedriveStorage = new OneDriveStorage(client_id);
+    await onedriveStorage.init();
+    return onedriveStorage;
   }
   else {
     throw "No such storage provider";
