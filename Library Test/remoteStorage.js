@@ -141,25 +141,29 @@ class GoogleStorage {
     
     function initUpload(accessToken, file, name, id, overwriting) {
       return new Promise(function (resolve, reject) {
-        let request = `{
-        "id": "${id}",
-        "name": "${name}"
-      }`;
-        let n = request.length;
-        let requestURL = `https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable`;
-        if (overwriting) {
-          requestURL = `https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=resumable`;
-        }
+        let requestURL = "https://www.googleapis.com/upload/drive/v3/files/";
+        let request = "";
         let requestHeaders = new Headers();
         requestHeaders.append('Authorization', 'Bearer ' + accessToken);
-        requestHeaders.append('Content-Type', 'application/json; charset=UTF-8');
-        requestHeaders.append('Content-Length', n);
+        if (overwriting) {
+          requestURL += `${id}?uploadType=resumable`;
+          requestHeaders.append('Content-Length', 0);
+        }
+        else {
+          request = `{
+            "id": "${id}",
+            "name": "${name}"
+          }`;
+          requestHeaders.append('Content-Type', 'application/json; charset=UTF-8');
+          requestHeaders.append('Content-Length', request.length);
+          requestURL += `?uploadType=resumable`;
+        }  
         requestHeaders.append('X-Upload-Content-Type', 'text/plain');
         requestHeaders.append('X-Upload-Content-Length', file.length);
         //Info on how to structure a resumable request: https://developers.google.com/drive/api/v3/resumable-upload
         //Helpful: http://chxo.com/be2/20050724_93bf.html (not so much now)
         let driveRequest = new Request(requestURL, {
-          method: overwriting ? "PUT" : "POST",
+          method: overwriting ? "PATCH" : "POST",
           headers: requestHeaders,
           body: request
         });
