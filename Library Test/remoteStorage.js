@@ -1,6 +1,6 @@
 const REDIRECT_URL = browser.identity.getRedirectURL();
 
-function oneDriveStorage(client_id) {
+/*function oneDriveStorage(client_id) {
   this.scopes = ["Files.ReadWrite"];
   this.auth_url =
   `https://login.microsoftonline.com/common/oauth2/v2.0/authorize\
@@ -67,7 +67,7 @@ function oneDriveStorage(client_id) {
         this.fileIDs = [];
       });
   }
-}
+}*/
 
 class GoogleStorage {
   constructor(client_id) {
