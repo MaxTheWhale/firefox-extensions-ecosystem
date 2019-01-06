@@ -6,7 +6,7 @@
       "default_title": "Remote Storage Test",
       "default_popup": "popup.html"
     },
-    "permissions": ["storage", "identity", "*://www.googleapis.com/*", "*://accounts.google.com/*"],
+    "permissions": ["identity", "*://www.googleapis.com/*", "*://accounts.google.com/*"],
     "background": {
       "scripts": [ "graph-js-sdk-web.js", "remoteStorage.js", "background.js" ]
     },

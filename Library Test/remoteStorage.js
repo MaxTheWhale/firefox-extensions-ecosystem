@@ -7,7 +7,6 @@ class GoogleStorage {
     let auth_url =
       `https://accounts.google.com/o/oauth2/auth?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://www.googleapis.com/oauth2/v3/tokeninfo";
-    let fileList = {};
 
     // PRIVATE METHODS
     async function validate(redirectURL) {
@@ -151,6 +150,30 @@ class GoogleStorage {
       }
     }
 
+    async function getFileID(accessToken, fileName) {
+      let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`);
+      let requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+
+      let driveRequest = new Request(requestURL, {
+        method: "GET",
+        headers: requestHeaders
+      });
+    
+      let response = await fetch(driveRequest)
+      if (response.status === 200) {
+        let res = await response.json();
+        if (res.files[0] !== undefined) {
+          return res.files[0].id;
+        }
+        else throw "No such file"
+      }
+      else {
+        console.log("File search failed");
+        throw response.status;
+      }
+    }
+
     async function download(accessToken, url) {
       let requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + accessToken);
@@ -170,33 +193,23 @@ class GoogleStorage {
     }
 
     // PUBLIC METHODS
-    this.init = async () => {
-      let files = await browser.storage.local.get("googleFiles")
-      if (files.googleFiles !== undefined) {
-        fileList = files.googleFiles;
-      }
-    }
-
     this.uploadFile = async (file, name) => {
       let accessToken = await getAccessToken();
-      let id = fileList[name];
+      let id;
       let overwriting = true;
-      if (id === undefined) {
+      try {
+        id = await getFileID(accessToken, name);
+      } catch (error) {
         id = await getID(accessToken);
         overwriting = false;
       }
       let response = await initUpload(accessToken, file, name, id, overwriting);
       upload(accessToken, file, response.headers.get('location'));
-      fileList[name] = id;
-      await browser.storage.local.set({googleFiles: fileList});
     }
 
     this.downloadFile = async (fileName) => {
       let accessToken = await getAccessToken();
-      let id = fileList[fileName];
-      if (id === undefined) {
-        throw "No such file";
-      }
+      let id = await getFileID(accessToken, fileName);
       let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
       return await download(accessToken, requestURL);
     }
@@ -204,15 +217,17 @@ class GoogleStorage {
     this.getInfo = async (fileName) => {
       let accessToken = await getAccessToken();
       if (fileName === undefined) {
-        return fileList;
+        let list = await getMetadata(accessToken, "");
+        let result = {};
+        list.files.forEach(file => {
+          if (file.kind === "drive#file") {
+            result[file.name] = file.id;
+          }
+        });
+        return result;
       }
       else {
-        if (fileList[fileName] !== undefined) {
-          return await getMetadata(accessToken, fileList[fileName]);
-        }
-        else {
-          throw "No such file";
-        }
+        return await getMetadata(accessToken, await getFileID(accessToken, fileName));
       }
     }
   }
@@ -337,7 +352,6 @@ class OneDriveStorage {
 async function createRemoteStorage(storageProvider, client_id) {
   if (storageProvider.toLowerCase() === "google") {
     let googleStorage = new GoogleStorage(client_id);
-    await googleStorage.init();
     return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
