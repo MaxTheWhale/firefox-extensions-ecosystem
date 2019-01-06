@@ -225,10 +225,20 @@ class OneDriveStorage {
     let auth_url =
       `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
-    let fileList = {};
     let token = "";
+    let client;
+    let init = initialize();
 
     // PRIVATE METHODS
+    async function initialize() {
+      token = await getAccessToken();
+      client = MicrosoftGraph.Client.init({
+        authProvider: (done) => {
+          done(null, token); //first parameter takes an error if you can't get an access token
+      }
+      });
+    }
+
     function extractAccessToken(redirectUri) {
       let m = redirectUri.match(/[#?](.*)/);
       if (!m || m.length < 1)
@@ -270,70 +280,55 @@ class OneDriveStorage {
     }
 
     async function getMetadata(id) {
-      var client = MicrosoftGraph.Client.init({
-        authProvider: (done) => {
-          done(null, token); //first parameter takes an error if you can't get an access token
-      }
-      });
       return await client.api(`me/drive/items/${id}`).get();
     }
 
+    async function getID(fileName) {
+      let idSearch = await client.api(`/me/drive/root/search(q='${fileName}')?select=id`).get();
+        if (idSearch.value[0] !== undefined) {
+          return idSearch.value[0].id;
+        }
+        else throw "No such file";
+    }
+
     async function upload(file, name) {
-      var client = MicrosoftGraph.Client.init({
-        authProvider: (done) => {
-          done(null, token); //first parameter takes an error if you can't get an access token
-      }
-      });
       let response = await client.api(`/me/drive/root/children/${name}/content`).put(file);
       return response;
     };
 
     async function download(fileName) {
-      var client = MicrosoftGraph.Client.init({
-        authProvider: (done) => {
-          done(null, token); //first parameter takes an error if you can't get an access token
-      }
-      });
-      let fileInfo = await client.api(`/me/drive/root/children/${fileName}`).get();
+      let id = await getID(fileName);
+      let fileInfo = await client.api(`/me/drive/items/${id}`).get();
       let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
       return await response.blob();
     };
 
 
     // PUBLIC METHODS
-    this.init = async () => {
-      let files = await browser.storage.local.get("onedriveFiles")
-      if (files.onedriveFiles !== undefined) {
-        fileList = files.onedriveFiles;
-      }
-      token = await getAccessToken();
-    }
-
     this.uploadFile = async (file, name) => {
-      let response = await upload(file, name);
-      fileList[name] = response.id;
-      await browser.storage.local.set({onedriveFiles: fileList});
+      await init;
+      return await upload(file, name);
     }
 
     this.downloadFile = async (fileName) => {
-      let id = fileList[fileName];
-      if (id === undefined) {
-        throw "No such file";
-      }
+      await init;
       return await download(fileName);
     }
 
     this.getInfo = async (fileName) => {
+      await init;
       if (fileName === undefined) {
-        return fileList;
+        let files = await client.api(`/me/drive/root/children`).get();
+        let result = {};
+        files.value.forEach(file => {
+          if (file.folder === undefined) {
+            result[file.name] = file.id;
+          }
+        });
+        return result;
       }
       else {
-        if (fileList[fileName] !== undefined) {
-          return await getMetadata(fileList[fileName]);
-        }
-        else {
-          throw "No such file";
-        }
+        return await getMetadata(await getID(fileName));
       }
     }
   }
@@ -347,7 +342,6 @@ async function createRemoteStorage(storageProvider, client_id) {
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
     let onedriveStorage = new OneDriveStorage(client_id);
-    await onedriveStorage.init();
     return onedriveStorage;
   }
   else {
