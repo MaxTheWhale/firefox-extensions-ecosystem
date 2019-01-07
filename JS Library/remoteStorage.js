@@ -192,6 +192,21 @@ class GoogleStorage {
       }
     }
 
+    async function gdelete(accessToken, url) {
+      let requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+      let driveRequest = new Request(url, {
+        method: "DELETE",
+        headers: requestHeaders
+      });
+    
+      let response = await fetch(driveRequest)
+      if (response.status >= 300) {
+        console.log("Delete failed");
+        throw response.status;
+      }
+    }
+
     // PUBLIC METHODS
     this.uploadFile = async (file, name) => {
       let accessToken = await getAccessToken();
@@ -212,6 +227,13 @@ class GoogleStorage {
       let id = await getFileID(accessToken, fileName);
       let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
       return await download(accessToken, requestURL);
+    }
+
+    this.deleteFile = async (fileName) => {
+      let accessToken = await getAccessToken();
+      let id = await getFileID(accessToken, fileName);
+      let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
+      return await gdelete(accessToken, requestURL);
     }
 
     this.getInfo = async (fileName) => {
@@ -299,9 +321,9 @@ class OneDriveStorage {
     }
 
     async function getID(fileName) {
-      let idSearch = await client.api(`/me/drive/root/search(q='${fileName}')?select=id`).get();
-        if (idSearch.value[0] !== undefined) {
-          return idSearch.value[0].id;
+      let fileInfo = await client.api(`/me/drive/root:/${fileName}`).get();
+        if (fileInfo.id !== undefined) {
+          return fileInfo.id;
         }
         else throw "No such file";
     }
@@ -309,15 +331,14 @@ class OneDriveStorage {
     async function upload(file, name) {
       let response = await client.api(`/me/drive/root/children/${name}/content`).put(file);
       return response;
-    };
+    }
 
     async function download(fileName) {
       let id = await getID(fileName);
       let fileInfo = await client.api(`/me/drive/items/${id}`).get();
       let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
       return await response.blob();
-    };
-
+    }
 
     // PUBLIC METHODS
     this.uploadFile = async (file, name) => {
@@ -328,6 +349,12 @@ class OneDriveStorage {
     this.downloadFile = async (fileName) => {
       await init;
       return await download(fileName);
+    }
+
+    this.deleteFile = async (fileName) => {
+      await init;
+      let id = await getID(fileName);
+      await client.api(`/me/drive/items/${id}`).delete();
     }
 
     this.getInfo = async (fileName) => {
