@@ -219,7 +219,7 @@ class GoogleStorage {
         overwriting = false;
       }
       let response = await initUpload(accessToken, file, name, id, overwriting);
-      upload(accessToken, file, response.headers.get('location'));
+      return upload(accessToken, file, response.headers.get('location'));
     }
 
     this.downloadFile = async (fileName) => {
