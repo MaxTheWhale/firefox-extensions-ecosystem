@@ -2,6 +2,8 @@ async function testStorage(hostElem, remoteStore) {
   testUpload(remoteStore);
   testDownload(remoteStore);
   testGetInfo(remoteStore);
+  testDelete(remoteStore);
+  testLargeUpload(remoteStore);
 }
 
 async function testUpload(remoteStore) {
@@ -54,7 +56,35 @@ async function testGetInfo(remoteStore) {
     let result = await remoteStore.getInfo();
     console.log(result);
   } catch (error) {
+  // TODO
+  }
+}
 
+async function testDelete(remoteStore) {
+  try {
+    let result = await remoteStore.uploadFile("This is a delete test", "deleteTest.txt");
+    console.log(result);   
+  } catch (error) {
+    console.log("Delete test cannot proceed: Upload failed");
+  }
+  try {
+    let result = await remoteStore.deleteFile("deleteTest.txt");
+    console.log(result);
+    console.log("Delete test passed");
+  } catch (error) {
+    console.log("Delete test failed: " + error);
+  }
+}
+
+async function testLargeUpload(remoteStore) {
+  let file = await fetch("large_file.png");
+  let fileBlob = await file.blob();
+  try {
+    let result = await remoteStore.uploadFile(fileBlob, "largeUploadTest.png");
+    console.log(result);
+    console.log("Large upload test passed");   
+  } catch (error) {
+    console.log("Large upload test failed: " + error);
   }
 }
 

@@ -1,5 +1,20 @@
 const REDIRECT_URL = browser.identity.getRedirectURL();
 
+const getSize = function(content) {
+  var className = content.constructor.name;
+  if (className === 'Blob' || className === 'File') {
+      return content.size;
+  }
+  else return content.length;
+}
+const getMIME = function(content) {
+  let request = new Request("", {
+    method: "PUT",
+    body: content
+  });
+  return request.headers.get("Content-Type");
+}
+
 class GoogleStorage {
   constructor(client_id) {
     // PRIVATE PROPERTIES
@@ -25,7 +40,7 @@ class GoogleStorage {
       });
   
       let response = await fetch(validationRequest);
-      if (response.status === 200) {
+      if (response.ok) {
         return accessToken;
       }
       else {
@@ -55,7 +70,7 @@ class GoogleStorage {
         });
     
         fetch(driveRequest).then((response) => {
-          if (response.status === 200) {
+          if (response.ok) {
             response.json().then((data) => {
               resolve(data.ids[0]);
             });
@@ -71,34 +86,31 @@ class GoogleStorage {
     function initUpload(accessToken, file, name, id, overwriting) {
       return new Promise(function (resolve, reject) {
         let requestURL = "https://www.googleapis.com/upload/drive/v3/files/";
-        let request = "";
+        let request = {};
         let requestHeaders = new Headers();
         requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+        requestHeaders.append('Content-Type', 'application/json');
         if (overwriting) {
           requestURL += `${id}?uploadType=resumable`;
-          requestHeaders.append('Content-Length', 0);
         }
         else {
-          request = `{
-            "id": "${id}",
-            "name": "${name}"
-          }`;
-          requestHeaders.append('Content-Type', 'application/json; charset=UTF-8');
-          requestHeaders.append('Content-Length', request.length);
+          request = {
+            "id": `${id}`,
+            "name": `${name}`
+          };
           requestURL += `?uploadType=resumable`;
-        }  
-        requestHeaders.append('X-Upload-Content-Type', 'text/plain');
-        requestHeaders.append('X-Upload-Content-Length', file.length);
+        }
+        requestHeaders.append('X-Upload-Content-Type', getMIME(file));
+        requestHeaders.append('X-Upload-Content-Length', getSize(file));
         //Info on how to structure a resumable request: https://developers.google.com/drive/api/v3/resumable-upload
-        //Helpful: http://chxo.com/be2/20050724_93bf.html (not so much now)
         let driveRequest = new Request(requestURL, {
           method: overwriting ? "PATCH" : "POST",
           headers: requestHeaders,
-          body: request
+          body: JSON.stringify(request)
         });
     
         fetch(driveRequest).then((response) => {
-          if (response.status === 200) {
+          if (response.ok) {
             resolve(response);
           } else {
             console.log("Upload initialization failed");
@@ -112,8 +124,6 @@ class GoogleStorage {
     async function upload(accessToken, file, url) {
       let requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + accessToken);
-      requestHeaders.append('Content-Type', 'text/plain');
-      requestHeaders.append('Content-Length', file.length);
       let driveRequest = new Request(url, {
         method: "PUT",
         headers: requestHeaders,
@@ -121,7 +131,7 @@ class GoogleStorage {
       });
     
       let response = await fetch(driveRequest)
-      if (response.status === 200) {
+      if (response.ok) {
         return response.json();
       }
       else {
@@ -141,7 +151,7 @@ class GoogleStorage {
       });
     
       let response = await fetch(driveRequest)
-      if (response.status === 200) {
+      if (response.ok) {
         return response.json();
       }
       else {
@@ -161,7 +171,7 @@ class GoogleStorage {
       });
     
       let response = await fetch(driveRequest)
-      if (response.status === 200) {
+      if (response.ok) {
         let res = await response.json();
         if (res.files[0] !== undefined) {
           return res.files[0].id;
@@ -183,7 +193,7 @@ class GoogleStorage {
       });
     
       let response = await fetch(driveRequest)
-      if (response.status === 200) {
+      if (response.ok) {
         return response.blob();
       }
       else {
@@ -201,10 +211,11 @@ class GoogleStorage {
       });
     
       let response = await fetch(driveRequest)
-      if (response.status >= 300) {
+      if (!response.ok) {
         console.log("Delete failed");
         throw response.status;
       }
+      return response.status;
     }
 
     // PUBLIC METHODS
@@ -297,7 +308,7 @@ class OneDriveStorage {
       });
   
       let response = await fetch(validationRequest);
-      if (response.status === 200) {
+      if (response.ok) {
         return accessToken;
       }
       else {
