@@ -3,10 +3,29 @@ const REDIRECT_URL = browser.identity.getRedirectURL();
 const getSize = function(content) {
   var className = content.constructor.name;
   if (className === 'Blob' || className === 'File') {
-      return content.size;
+    return content.size;
   }
-  else return content.length;
+  if (className === 'ArrayBuffer'
+    || className === 'Int8Array'
+    || className === 'Int16Array'
+    || className === 'Int32Array'
+    || className === 'Uint8Array'
+    || className === 'Uint16Array'
+    || className === 'Uint32Array'
+    || className === 'Uint8ClampedArray'
+    || className === 'Float32Array'
+    || className === 'Float64Array'
+    || className === 'DataView') {
+    return content.byteLength
+  }
+  if (typeof content === 'string') {
+    return content.length
+  }
+  else {
+    return JSON.stringify(content).length;
+  }
 }
+
 const getMIME = function(content) {
   let request = new Request("", {
     method: "PUT",
