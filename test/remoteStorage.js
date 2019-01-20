@@ -213,7 +213,7 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (response.ok) {
-        return response.blob();
+        return response;
       }
       else {
         console.log("Download failed");
@@ -273,7 +273,7 @@ class GoogleStorage {
         let result = {};
         list.files.forEach(file => {
           if (file.kind === "drive#file") {
-            result[file.name] = file.id;
+            result[file.name] = file;
           }
         });
         return result;
@@ -367,7 +367,7 @@ class OneDriveStorage {
       let id = await getID(fileName);
       let fileInfo = await client.api(`/me/drive/items/${id}`).get();
       let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
-      return await response.blob();
+      return response;
     }
 
     // PUBLIC METHODS
@@ -394,13 +394,16 @@ class OneDriveStorage {
         let result = {};
         files.value.forEach(file => {
           if (file.folder === undefined) {
-            result[file.name] = file.id;
+            file.mimeType = file.file.mimeType;
+            result[file.name] = file;
           }
         });
         return result;
       }
       else {
-        return await getMetadata(await getID(fileName));
+        let info = await getMetadata(await getID(fileName));
+        info.mimeType = info.file.mimeType;
+        return info;
       }
     }
   }

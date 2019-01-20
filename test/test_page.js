@@ -1,21 +1,35 @@
 async function testStorage(hostElem, remoteStore) {
-  await testUpload(remoteStore);
-  await testDownload(remoteStore);
-  await testGetInfo(remoteStore);
-  await testDelete(remoteStore);
-  await testOverwrite(remoteStore);
-  await testLargeUpload(remoteStore);
-  await testLargeDownload(remoteStore);
+  while(hostElem.childElementCount > 1) {
+    hostElem.removeChild(hostElem.lastChild);
+  }
+  hostElem.firstElementChild.textContent = "Running tests...";
+  hostElem.firstElementChild.disabled = true;
+
+  hostElem.appendChild(makeListElement(await testUpload(remoteStore)));
+  hostElem.appendChild(makeListElement(await testDownload(remoteStore)));
+  hostElem.appendChild(makeListElement(await testGetInfo(remoteStore)));
+  hostElem.appendChild(makeListElement(await testDelete(remoteStore)));
+  hostElem.appendChild(makeListElement(await testOverwrite(remoteStore)));
+  hostElem.appendChild(makeListElement(await testLargeUpload(remoteStore)));
+  hostElem.appendChild(makeListElement(await testLargeDownload(remoteStore)));
   await cleanupTests(remoteStore);
+
+  hostElem.firstElementChild.textContent = "Test";
+  hostElem.firstElementChild.disabled = false;
+}
+
+function makeListElement(text) {
+  const listItem = document.createElement("li");
+  listItem.textContent = text;
+  return listItem;
 }
 
 async function testUpload(remoteStore) {
   try {
-    let result = await remoteStore.uploadFile("This is an upload test", "uploadTest.txt");
-    console.log(result);
-    console.log("Upload test passed");   
+    await remoteStore.uploadFile("This is an upload test", "uploadTest.txt");
+    return "Upload test passed";   
   } catch (error) {
-    console.log("Upload test failed: " + error);
+    return "Upload test failed: " + error;
   }
 }
 
@@ -23,43 +37,43 @@ async function testDownload(remoteStore) {
   try {
     await remoteStore.uploadFile("This is a download test", "downloadTest.txt");
   } catch (error) {
-    console.log("Download test cannot proceed: Upload failed");
-    return;
+    return "Download test cannot proceed: Upload failed";
   }
   try {
     let result = await remoteStore.downloadFile("downloadTest.txt");
-    console.log(result);
-    var reader = new FileReader();
-    reader.addEventListener("loadend", function() {
-      if (reader.result != "This is a download test") {
-        console.log("Download test failed: Contents do not match");
-      }
-      else console.log("Download test passed");
-    });
-    reader.readAsText(result);
+    if (await result.text() != "This is a download test") {
+      return "Download test failed: Contents do not match";
+    }
+    return "Download test passed";
   } catch (error) {
-    console.log("Download test failed: " + error);
+    return "Download test failed: " + error;
   }
 }
 
 async function testGetInfo(remoteStore) {
   try {
     await remoteStore.uploadFile("This is getInfo test1", "infoTest1.txt");  
-  } catch (error) {
-    console.log("GetInfo test cannot proceed: Upload failed");
-    return;
-  }
-  try {
     await remoteStore.uploadFile("This is getInfo test2", "infoTest2.txt"); 
   } catch (error) {
-    console.log("GetInfo test cannot proceed: Upload failed");
-    return;
+    return "GetInfo test cannot proceed: Upload failed";
   }
   try {
-    let result = await remoteStore.getInfo();
-    console.log(result);
+    let result = await remoteStore.getInfo("infoTest1.txt");
+    if (result.name != "infoTest1.txt" || result.mimeType != "text/plain") {
+      return "GetInfo test failed: Metadata incorrect";
+    }
+    result = await remoteStore.getInfo();
+    if (result["infoTest1.txt"] === undefined
+     || result["infoTest2.txt"] === undefined) {
+      return "GetInfo test failed: File(s) not present in result";
+    }
+    if (result["infoTest2.txt"].name != "infoTest2.txt"
+     || result["infoTest2.txt"].mimeType != "text/plain") {
+      return "GetInfo test failed: Metadata incorrect";
+    }
+    return "GetInfo test passed"; 
   } catch (error) {
-  // TODO
+    return "GetInfo test failed: " + error;
   }
 }
 
@@ -67,44 +81,31 @@ async function testDelete(remoteStore) {
   try {
     await remoteStore.uploadFile("This is a delete test", "deleteTest.txt"); 
   } catch (error) {
-    console.log("Delete test cannot proceed: Upload failed");
-    return;
+    return "Delete test cannot proceed: Upload failed";
   }
   try {
-    let result = await remoteStore.deleteFile("deleteTest.txt");
-    console.log(result);
-    console.log("Delete test passed");
+    await remoteStore.deleteFile("deleteTest.txt");
+    return "Delete test passed";
   } catch (error) {
-    console.log("Delete test failed: " + error);
+    return "Delete test failed: " + error;
   }
 }
 
 async function testOverwrite(remoteStore) {
   try {
     await remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt"); 
-  } catch (error) {
-    console.log("Overwrite test cannot proceed: Upload failed");
-    return;
-  }
-  try {
     await remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt");
   } catch (error) {
-    console.log("Overwrite test cannot proceed: Upload failed");
-    return;
+    return "Overwrite test cannot proceed: Upload failed";
   }
   try {
     let result = await remoteStore.downloadFile("overwriteTest.txt");
-    console.log(result);
-    var reader = new FileReader();
-    reader.addEventListener("loadend", function() {
-      if (reader.result != "This is an overwrite test") {
-        console.log("Overwrite test failed: Contents not overwritten");
-      }
-      else console.log("Overwrite test passed");
-    });
-    reader.readAsText(result);
+    if (await result.text() != "This is an overwrite test") {
+      return "Overwrite test failed: Contents not overwritten";
+    }
+    return "Overwrite test passed";
   } catch (error) {
-    console.log("Overwrite test failed: " + error);
+    return "Overwrite test failed: " + error;
   }
 }
 
@@ -112,11 +113,10 @@ async function testLargeUpload(remoteStore) {
   let file = await fetch("large_file.png");
   let fileBlob = await file.blob();
   try {
-    let result = await remoteStore.uploadFile(fileBlob, "largeUploadTest.png");
-    console.log(result);
-    console.log("Large upload test passed");   
+    await remoteStore.uploadFile(fileBlob, "largeUploadTest.png");
+    return "Large upload test passed";  
   } catch (error) {
-    console.log("Large upload test failed: " + error);
+    return "Large upload test failed: " + error;
   }
 }
 
@@ -124,21 +124,19 @@ async function testLargeDownload(remoteStore) {
   let file = await fetch("large_file.png");
   let fileBlob = await file.blob();
   try {
-    let result = await remoteStore.uploadFile(fileBlob, "largeDownloadTest.png");
-    console.log(result);
+    await remoteStore.uploadFile(fileBlob, "largeDownloadTest.png");
   } catch (error) {
-    console.log("Large download test cannot proceed: Upload failed");
-    return;
+    return "Large download test cannot proceed: Upload failed";
   }
   try {
     let result = await remoteStore.downloadFile("largeDownloadTest.png");
-    console.log(result);
+    result = await result.blob();
     if (result.size !== fileBlob.size) {
-      console.log("Large download test failed: Contents do not match");
+      return "Large download test failed: Contents do not match";
     }
-    else console.log("Large download test passed");
+    return "Large download test passed";
   } catch (error) {
-    console.log("Large download test failed: " + error);
+    return "Large download test failed: " + error;
   }
 }
 
@@ -155,15 +153,15 @@ async function cleanupTests(remoteStore) {
 async function makePopup() {
   let background = await browser.runtime.getBackgroundPage();
   const googleElem = document.getElementById("googleDrive");
-  const googleSignIn = document.createElement("button");
-  googleSignIn.textContent = "Test";
-  googleSignIn.onclick = async () => { let googleStore = await background.getGoogleStore(); testStorage(googleElem, googleStore)};
-  googleElem.appendChild(googleSignIn);
+  const googleTest = document.createElement("button");
+  googleTest.textContent = "Test";
+  googleTest.onclick = async () => { let googleStore = await background.getGoogleStore(); testStorage(googleElem, googleStore)};
+  googleElem.appendChild(googleTest);
 
   const onedriveElem = document.getElementById("oneDrive");
-  const onedriveSignIn = document.createElement("button");
-  onedriveSignIn.textContent = "Test";
-  onedriveSignIn.onclick = async () => { let onedriveStore = await background.getOneDriveStore(); testStorage(onedriveElem, onedriveStore)};
-  onedriveElem.appendChild(onedriveSignIn);
+  const onedriveTest = document.createElement("button");
+  onedriveTest.textContent = "Test";
+  onedriveTest.onclick = async () => { let onedriveStore = await background.getOneDriveStore(); testStorage(onedriveElem, onedriveStore)};
+  onedriveElem.appendChild(onedriveTest);
 }
 makePopup();
