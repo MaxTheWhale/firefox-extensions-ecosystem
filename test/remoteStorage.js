@@ -293,6 +293,7 @@ class OneDriveStorage {
       `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
+    let expireTime;
     let client;
     let init = initialize();
 
@@ -328,6 +329,7 @@ class OneDriveStorage {
   
       let response = await fetch(validationRequest);
       if (response.ok) {
+        expireTime = Date.now() + 3590000;
         return accessToken;
       }
       else {
@@ -344,6 +346,12 @@ class OneDriveStorage {
     
     function getAccessToken() {
       return authorize().then(validate);
+    }
+
+    async function checkToken() {
+      if (Date.now() >= expireTime) {
+        await initialize();
+      }
     }
 
     async function getMetadata(id) {
@@ -373,22 +381,26 @@ class OneDriveStorage {
     // PUBLIC METHODS
     this.uploadFile = async (file, name) => {
       await init;
+      await checkToken();
       return await upload(file, name);
     }
 
     this.downloadFile = async (fileName) => {
       await init;
+      await checkToken();
       return await download(fileName);
     }
 
     this.deleteFile = async (fileName) => {
       await init;
+      await checkToken();
       let id = await getID(fileName);
       await client.api(`/me/drive/items/${id}`).delete();
     }
 
     this.getInfo = async (fileName) => {
       await init;
+      await checkToken();
       if (fileName === undefined) {
         let files = await client.api(`/me/drive/root/children`).get();
         let result = {};

@@ -141,13 +141,17 @@ async function testLargeDownload(remoteStore) {
 }
 
 async function cleanupTests(remoteStore) {
-  await remoteStore.deleteFile("uploadTest.txt");
-  await remoteStore.deleteFile("downloadTest.txt");
-  await remoteStore.deleteFile("infoTest1.txt");
-  await remoteStore.deleteFile("infoTest2.txt");
-  await remoteStore.deleteFile("overwriteTest.txt");
-  await remoteStore.deleteFile("largeUploadTest.png");
-  await remoteStore.deleteFile("largeDownloadTest.png");
+  try {
+    await remoteStore.deleteFile("uploadTest.txt");
+    await remoteStore.deleteFile("downloadTest.txt");
+    await remoteStore.deleteFile("infoTest1.txt");
+    await remoteStore.deleteFile("infoTest2.txt");
+    await remoteStore.deleteFile("overwriteTest.txt");
+    await remoteStore.deleteFile("largeUploadTest.png");
+    await remoteStore.deleteFile("largeDownloadTest.png");
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function makePopup() {
