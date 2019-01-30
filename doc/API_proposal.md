@@ -30,10 +30,12 @@ Likewise, files returned from the download method will be in a Blob object.
 When retrieving metadata for files, it will be returned as an object with
 key-value pairs for each field. Only the following fields are guaranteed to be
 present across all storage providers:
+
 | Field    | Description |
 |-----------|-------------|
 | `name` | The name of the file, including its extension
 | `mimeType` | The MIME type of the file.
+
 Note that other properties will be returned, but they are not supported by all
 providers, so relying on them would prevent easy provider switching.<br>
 When retrieving metadata for all files, the object returned will have key-value
@@ -43,6 +45,7 @@ previously described metadata object.
 ## Methods
 The API provides classes for each cloud storage provider that are used as the
 interface. The following methods are available:
+
 | Method    | Description |
 |-----------|-------------|
 | `getInfo(fileName)` | When given a file name, it will retrieve the metadata for that file in the format described in the Metadata section. If the file doesn't exist, it will throw an error. If the argument is omitted, the metadata for all files will be retrieved.
