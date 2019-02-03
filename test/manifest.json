@@ -7,7 +7,7 @@
     },
     "permissions": ["identity", "tabs", "*://www.googleapis.com/*", "*://accounts.google.com/*"],
     "background": {
-      "scripts": [ "graph-js-sdk-web.js", "remoteStorage.js", "background.js" ]
+      "scripts": [ "background.js" ]
     },
     "applications": {
       "gecko": {

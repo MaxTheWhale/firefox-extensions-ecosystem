@@ -1,5 +1,6 @@
 describe("Google Drive", function() {
     var timeOut = 10000;
+    var largeTimeOut = 30000;
     var remoteStore;
     var error;
 
@@ -8,6 +9,19 @@ describe("Google Drive", function() {
         error = undefined;
     });
 
+    afterAll(async function() {
+        try {
+            await remoteStore.deleteFile("uploadTest.txt");
+            await remoteStore.deleteFile("downloadTest.txt");
+            await remoteStore.deleteFile("infoTest1.txt");
+            await remoteStore.deleteFile("infoTest2.txt");
+            await remoteStore.deleteFile("overwriteTest.txt");
+            await remoteStore.deleteFile("largeUploadTest.png");
+            await remoteStore.deleteFile("largeDownloadTest.png");
+        } catch (e) {
+        }
+    }, largeTimeOut);
+
     it("Should be able to complete an upload without error", (done) => {    //Fails when error is thrown
         remoteStore.uploadFile("This is an upload test", "uploadTest.txt").then(() => {
             done();
@@ -19,7 +33,7 @@ describe("Google Drive", function() {
     it("Should be able to complete a download without error", (done) => {
         remoteStore.uploadFile("This is a download test", "downloadTest.txt").then(() => {
             remoteStore.downloadFile("downloadTest.txt").then((result) => {
-                result.text().then((text) => {
+                new Response(result).text().then((text) => {
                     expect(text).toMatch("This is a download test");
                     done();
                 });
@@ -71,7 +85,7 @@ describe("Google Drive", function() {
         remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt").then(() => {
             remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt").then(() => {
                 remoteStore.downloadFile("overwriteTest.txt").then((result) => {
-                    result.text().then((text) => {
+                    new Response(result).text().then((text) => {
                         expect(text).toMatch("This is an overwrite test");
                         done();
                     })
@@ -90,29 +104,28 @@ describe("Google Drive", function() {
                 });
             });
         });
-    }, timeOut);
+    }, largeTimeOut);
 
     it("Should be able to download a large file", (done) => {
         fetch("large_file.png").then((file) => {
             file.blob().then((fileBlob) => {
                 remoteStore.uploadFile(fileBlob, "largeDownloadTest.png").then(() => {
-                    remoteStore.downloadFile("largeDownloadTest.png").then((result) => {
-                        result.blob().then((result) => {
-                            expect(result.size).toEqual(fileBlob.size);
-                            done();
-                        });
+                    remoteStore.downloadFile("largeDownloadTest.png").then((result) => { 
+                        expect(result.size).toEqual(fileBlob.size);
+                        done();
                     }).catch((e) => {
                         fail(e);
                     });
                 });
             });
         });
-    }, timeOut);
+    }, largeTimeOut);
 
 });
 
 describe("OneDrive", function() {
     var timeOut = 10000;
+    var largeTimeOut = 30000;
     var remoteStore;
     var error;
 
@@ -120,6 +133,19 @@ describe("OneDrive", function() {
         remoteStore = await getOneDriveStore();
         error = undefined;
     });
+    
+    afterAll(async function() {
+        try {
+            await remoteStore.deleteFile("uploadTest.txt");
+            await remoteStore.deleteFile("downloadTest.txt");
+            await remoteStore.deleteFile("infoTest1.txt");
+            await remoteStore.deleteFile("infoTest2.txt");
+            await remoteStore.deleteFile("overwriteTest.txt");
+            await remoteStore.deleteFile("largeUploadTest.png");
+            await remoteStore.deleteFile("largeDownloadTest.png");
+        } catch (e) {
+        }
+    }, largeTimeOut);
 
     it("Should be able to complete an upload without error", (done) => {    //Fails when error is thrown
         remoteStore.uploadFile("This is an upload test", "uploadTest.txt").then(() => {
@@ -132,7 +158,7 @@ describe("OneDrive", function() {
     it("Should be able to complete a download without error", (done) => {
         remoteStore.uploadFile("This is a download test", "downloadTest.txt").then(() => {
             remoteStore.downloadFile("downloadTest.txt").then((result) => {
-                result.text().then((text) => {
+                new Response(result).text().then((text) => {
                     expect(text).toMatch("This is a download test");
                     done();
                 });
@@ -184,7 +210,7 @@ describe("OneDrive", function() {
         remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt").then(() => {
             remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt").then(() => {
                 remoteStore.downloadFile("overwriteTest.txt").then((result) => {
-                    result.text().then((text) => {
+                    new Response(result).text().then((text) => {
                         expect(text).toMatch("This is an overwrite test");
                         done();
                     })
@@ -203,23 +229,21 @@ describe("OneDrive", function() {
                 });
             });
         });
-    }, timeOut);
+    }, largeTimeOut);
 
     it("Should be able to download a large file", (done) => {
         fetch("large_file.png").then((file) => {
             file.blob().then((fileBlob) => {
                 remoteStore.uploadFile(fileBlob, "largeDownloadTest.png").then(() => {
-                    remoteStore.downloadFile("largeDownloadTest.png").then((result) => {
-                        result.blob().then((result) => {
-                            expect(result.size).toEqual(fileBlob.size);
-                            done();
-                        });
+                    remoteStore.downloadFile("largeDownloadTest.png").then((result) => { 
+                        expect(result.size).toEqual(fileBlob.size);
+                        done();
                     }).catch((e) => {
                         fail(e);
                     });
                 });
             });
         });
-    }, timeOut);
+    }, largeTimeOut);
 
 });

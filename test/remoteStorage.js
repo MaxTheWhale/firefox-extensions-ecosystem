@@ -222,7 +222,7 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (response.ok) {
-        return response;
+        return await response.blob();
       }
       else {
         console.log("Download failed");
@@ -384,7 +384,7 @@ class OneDriveStorage {
       let id = await getID(fileName);
       let fileInfo = await client.api(`/me/drive/items/${id}`).get();
       let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
-      return response;
+      return await response.blob();
     }
 
     // PUBLIC METHODS
