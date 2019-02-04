@@ -41,8 +41,16 @@ class GoogleStorage {
     let auth_url =
       `https://accounts.google.com/o/oauth2/auth?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://www.googleapis.com/oauth2/v3/tokeninfo";
+    let token = "";
+    let expireTime;
 
     // PRIVATE METHODS
+
+    async function checkToken(scopeChange) {
+      if (token === "" || Date.now() >= expireTime || scopeChange)
+        token = await getAccessToken();
+    }
+
     async function validate(redirectURL) {
       let m = redirectURL.match(/[#?](.*)/);
       if (!m || m.length < 1)
@@ -60,6 +68,7 @@ class GoogleStorage {
   
       let response = await fetch(validationRequest);
       if (response.ok) {
+        expireTime = Date.now() + 3590000; //Expire after 60 minutes
         return accessToken;
       }
       else {
@@ -213,7 +222,7 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (response.ok) {
-        return response;
+        return await response.blob();
       }
       else {
         console.log("Download failed");
@@ -239,37 +248,37 @@ class GoogleStorage {
 
     // PUBLIC METHODS
     this.uploadFile = async (file, name) => {
-      let accessToken = await getAccessToken();
+      await checkToken(false);
       let id;
       let overwriting = true;
       try {
-        id = await getFileID(accessToken, name);
+        id = await getFileID(token, name);
       } catch (error) {
-        id = await getID(accessToken);
+        id = await getID(token);
         overwriting = false;
       }
-      let response = await initUpload(accessToken, file, name, id, overwriting);
-      return upload(accessToken, file, response.headers.get('location'));
+      let response = await initUpload(token, file, name, id, overwriting);
+      return upload(token, file, response.headers.get('location'));
     }
 
     this.downloadFile = async (fileName) => {
-      let accessToken = await getAccessToken();
-      let id = await getFileID(accessToken, fileName);
+      await checkToken(false);
+      let id = await getFileID(token, fileName);
       let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
-      return await download(accessToken, requestURL);
+      return await download(token, requestURL);
     }
 
     this.deleteFile = async (fileName) => {
-      let accessToken = await getAccessToken();
-      let id = await getFileID(accessToken, fileName);
+      await checkToken(false);
+      let id = await getFileID(token, fileName);
       let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
-      return await gdelete(accessToken, requestURL);
+      return await gdelete(token, requestURL);
     }
 
     this.getInfo = async (fileName) => {
-      let accessToken = await getAccessToken();
+      await checkToken(false);
       if (fileName === undefined) {
-        let list = await getMetadata(accessToken, "");
+        let list = await getMetadata(token, "");
         let result = {};
         list.files.forEach(file => {
           if (file.kind === "drive#file") {
@@ -279,7 +288,7 @@ class GoogleStorage {
         return result;
       }
       else {
-        return await getMetadata(accessToken, await getFileID(accessToken, fileName));
+        return await getMetadata(token, await getFileID(token, fileName));
       }
     }
   }
@@ -293,6 +302,7 @@ class OneDriveStorage {
       `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
+    let expireTime;
     let client;
     let init = initialize();
 
@@ -328,6 +338,7 @@ class OneDriveStorage {
   
       let response = await fetch(validationRequest);
       if (response.ok) {
+        expireTime = Date.now() + 3590000;
         return accessToken;
       }
       else {
@@ -344,6 +355,12 @@ class OneDriveStorage {
     
     function getAccessToken() {
       return authorize().then(validate);
+    }
+
+    async function checkToken() {
+      if (Date.now() >= expireTime) {
+        await initialize();
+      }
     }
 
     async function getMetadata(id) {
@@ -367,28 +384,32 @@ class OneDriveStorage {
       let id = await getID(fileName);
       let fileInfo = await client.api(`/me/drive/items/${id}`).get();
       let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
-      return response;
+      return await response.blob();
     }
 
     // PUBLIC METHODS
     this.uploadFile = async (file, name) => {
       await init;
+      await checkToken();
       return await upload(file, name);
     }
 
     this.downloadFile = async (fileName) => {
       await init;
+      await checkToken();
       return await download(fileName);
     }
 
     this.deleteFile = async (fileName) => {
       await init;
+      await checkToken();
       let id = await getID(fileName);
       await client.api(`/me/drive/items/${id}`).delete();
     }
 
     this.getInfo = async (fileName) => {
       await init;
+      await checkToken();
       if (fileName === undefined) {
         let files = await client.api(`/me/drive/root/children`).get();
         let result = {};
