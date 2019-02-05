@@ -26,4 +26,4 @@ Click "Create".
 
 ## Testing
 There is an extension in the test folder. It can be loaded in Firefox, and when 
-it is clicked it will open Jasmine test suite, which will run through a series of tests for each cloud provider.
+it is clicked it will open a Jasmine test suite, which will run through a series of tests for each cloud provider.
