@@ -1,6 +1,6 @@
 describe("Google Drive", function() {
     var timeOut = 10000;
-    var largeTimeOut = 30000;
+    var largeTimeOut = 20000;
     var remoteStore;
     var error;
 
@@ -23,7 +23,8 @@ describe("Google Drive", function() {
     }, largeTimeOut);
 
     it("Should be able to complete an upload without error", (done) => {    //Fails when error is thrown
-        remoteStore.uploadFile("This is an upload test", "uploadTest.txt").then(() => {
+        remoteStore.uploadFile("This is an upload test", "uploadTest.txt").then((result) => {
+            expect(result / 100).toEqual(2);
             done();
         }).catch((e) => {
             fail(e);
@@ -97,7 +98,8 @@ describe("Google Drive", function() {
     it("Should be able to upload a large file", (done) => {
         fetch("large_file.png").then((file) => {
             file.blob().then((fileBlob) => {
-                remoteStore.uploadFile(fileBlob, "largeUploadTest.png").then(() => {
+                remoteStore.uploadFile(fileBlob, "largeUploadTest.png").then((result) => {
+                    expect(result / 100).toEqual(2);
                     done();
                 }).catch((e) => {
                     fail(e);
@@ -125,7 +127,7 @@ describe("Google Drive", function() {
 
 describe("OneDrive", function() {
     var timeOut = 10000;
-    var largeTimeOut = 30000;
+    var largeTimeOut = 20000;
     var remoteStore;
     var error;
 
@@ -148,7 +150,8 @@ describe("OneDrive", function() {
     }, largeTimeOut);
 
     it("Should be able to complete an upload without error", (done) => {    //Fails when error is thrown
-        remoteStore.uploadFile("This is an upload test", "uploadTest.txt").then(() => {
+        remoteStore.uploadFile("This is an upload test", "uploadTest.txt").then((result) => {
+            expect(result / 100).toEqual(2);
             done();
         }).catch((e) => {
             fail(e);
@@ -222,7 +225,8 @@ describe("OneDrive", function() {
     it("Should be able to upload a large file", (done) => {
         fetch("large_file.png").then((file) => {
             file.blob().then((fileBlob) => {
-                remoteStore.uploadFile(fileBlob, "largeUploadTest.png").then(() => {
+                remoteStore.uploadFile(fileBlob, "largeUploadTest.png").then((result) => {
+                    expect(result / 100).toEqual(2);
                     done();
                 }).catch((e) => {
                     fail(e);

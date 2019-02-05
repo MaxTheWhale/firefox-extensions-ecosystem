@@ -160,7 +160,7 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (response.ok) {
-        return response.json();
+        return response.status;
       }
       else {
         console.log("Upload failed");
@@ -376,15 +376,23 @@ class OneDriveStorage {
     }
 
     async function upload(file, name) {
-      let response = await client.api(`/me/drive/root/children/${name}/content`).put(file);
-      return response;
+      try {
+        await client.api(`/me/drive/root/children/${name}/content`).put(file);
+        return 200;
+      } catch (error) {
+        throw error;
+      }
     }
 
     async function download(fileName) {
       let id = await getID(fileName);
-      let fileInfo = await client.api(`/me/drive/items/${id}`).get();
-      let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
-      return await response.blob();
+      try {
+        let fileInfo = await client.api(`/me/drive/items/${id}`).get();
+        let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
+        return await response.blob();
+      } catch (error) {
+        throw error;
+      }
     }
 
     // PUBLIC METHODS
@@ -404,7 +412,12 @@ class OneDriveStorage {
       await init;
       await checkToken();
       let id = await getID(fileName);
-      await client.api(`/me/drive/items/${id}`).delete();
+      try {
+        await client.api(`/me/drive/items/${id}`).delete();
+        return 200;
+      } catch (error) {
+        throw error;
+      }
     }
 
     this.getInfo = async (fileName) => {

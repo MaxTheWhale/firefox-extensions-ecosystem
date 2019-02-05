@@ -42,7 +42,7 @@ previously described metadata object.
 
 ### Storage-specific metadata
 Note that other properties will be returned, but they are not supported by all
-providers, so relying on them would prevent easy provider switching. Refer to the [Google Drive](https://developers.google.com/drive/api/v3/reference/files) and [One Drive](https://docs.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0) metadata documentation for details.
+providers, so relying on them would prevent easy provider switching. Refer to the [Google Drive](https://developers.google.com/drive/api/v3/reference/files) and [OneDrive](https://docs.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0) metadata documentation for details.
 
 ## Methods
 The API provides classes for each cloud storage provider that are used as the
@@ -50,8 +50,8 @@ interface. The following methods are available:
 
 | Method    | Description | Returns |
 |-----------|-------------|---------|
-| `getInfo(fileName)` | When given a file name, it will retrieve the metadata for that file in the format described in the Metadata section. If the file doesn't exist, it will throw an error. If the argument is omitted, the metadata for all files in the cloud store will be retrieved.
-| `uploadFile(file, fileName)` | When given a file and a file name, it will attempt to upload the file to the cloud storage. If the file already exists, it will be overwritten. If the upload fails, an error will be thrown with the HTTP status code.
-| `downloadFile(fileName)` | When given a file name, it will attempt to download the file from the cloud storage. If successful, it will return the file in Blob format. If the download fails, an error will be thrown with the HTTP status code.
-| `deleteFile(fileName)` | When given a file name, it will attempt to delete the file from the cloud storage. If the file doesn't exist, it will throw an error. If the delete fails for any other reason, an error will be thrown with the HTTP status code.
+| `getInfo(fileName)` | When given a file name, it will retrieve the metadata for that file in the format described in the Metadata section. If the file doesn't exist, it will throw an error. If the argument is omitted, the metadata for all files in the cloud store will be retrieved. | Metadata object as described above
+| `uploadFile(file, fileName)` | When given a file and a file name, it will attempt to upload the file to the cloud storage. If the file already exists, it will be overwritten. If the upload fails, an error will be thrown with the HTTP status code. | HTTP status code
+| `downloadFile(fileName)` | When given a file name, it will attempt to download the file from the cloud storage. If successful, it will return the file in Blob format. If the download fails, an error will be thrown with the HTTP status code. | Blob object containing the file
+| `deleteFile(fileName)` | When given a file name, it will attempt to delete the file from the cloud storage. If the file doesn't exist, it will throw an error. If the delete fails for any other reason, an error will be thrown with the HTTP status code. | HTTP status code
 
