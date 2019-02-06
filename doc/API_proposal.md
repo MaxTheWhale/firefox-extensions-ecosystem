@@ -11,6 +11,7 @@ existing extensions with little to no changes.
 
 ## Interface
 The cloud storages are interfaced with via a series of common methods implemented in a class for each cloud provider. To use these methods, a class instance must be created via the helper method below:
+
 | Method | Description | Returns |
 |--------|-----------|---------|
 | `createRemoteStorage(provider, client_id)` | This function takes your client ID and chosen cloud provider and creates an instance of a remote storage class that can then be used. Valid values for provider are "Google" and "OneDrive" (case-insensitive) | A class instance for the selected cloud provider and client ID.
