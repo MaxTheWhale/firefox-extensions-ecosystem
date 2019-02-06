@@ -15,6 +15,8 @@ The cloud storages are interfaced with via a series of common methods implemente
 |--------|-----------|---------|
 | `createRemoteStorage(provider, client_id)` | This function takes your client ID and chosen cloud provider and creates an instance of a remote storage class that can then be used. Valid values for provider are "Google" and "OneDrive" (case-insensitive) | A class instance for the selected cloud provider and client ID.
 
+To obtain a client_id you will need to visit either [Google Developers Console](https://console.developers.google.com/) or the [Microsoft Application Registration Portal](https://apps.dev.microsoft.com/#/appList) and follow the provided instructions to register your application.
+
 ## File Access
 In order to simplify the use of the API, files are saved and retrieved based
 only on their file name. This has some obvious caveats; any kind of folder
