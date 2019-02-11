@@ -40,7 +40,7 @@ describe("Google Drive", function() {
         // });
     }, timeOut); //Setting custom timeout to deal with handling stuff over internet
     
-    it("Should be able to complete a download without error", (done) => {
+    it("Should be able to complete a download without error", async (done) => {
         try {
             await remoteStore.uploadFile("This is a download test", "downloadTest.txt");
             result = await remoteStore.downloadFile("downloadTest.txt");
@@ -63,9 +63,10 @@ describe("Google Drive", function() {
         // });
     }, timeOut);
 
-    it("Should be able to delete a file without error", (done) => {
+    it("Should be able to delete a file without error", async (done) => {
         try {
             await remoteStore.uploadFile("This is a delete test", "deleteTest.txt");
+            await remoteStore.deleteFile("deleteTest.txt");
             result = await remoteStore.getInfo();
         } catch(e) {
             error = e;
@@ -86,7 +87,7 @@ describe("Google Drive", function() {
         // });
     }, timeOut);
 
-    it("Should be able to get correct file's info", (done) => {
+    it("Should be able to get correct file's info", async (done) => {
         try {
             await remoteStore.uploadFile("This is getInfo test1", "infoTest1.txt");
             result = await remoteStore.getInfo("infoTest1.txt");
@@ -109,7 +110,7 @@ describe("Google Drive", function() {
         // });
     }, timeOut);
 
-    it ("Should be able to get all files info", (done) => {
+    it ("Should be able to get all files info", async (done) => {
         try {
             await remoteStore.uploadFile("This is getInfo test2", "infoTest2.txt");
             result = await remoteStore.getInfo();
@@ -134,7 +135,7 @@ describe("Google Drive", function() {
         // }); 
     }, timeOut);
 
-    it("Should be able to overwrite a file", (done) => {
+    it("Should be able to overwrite a file", async (done) => {
         try {
             await remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt");
             await remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt");
@@ -159,7 +160,7 @@ describe("Google Drive", function() {
         // });
     }, timeOut);
 
-    it("Should be able to upload a large file", (done) => {
+    it("Should be able to upload a large file", async (done) => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -183,7 +184,7 @@ describe("Google Drive", function() {
         // });
     }, largeTimeOut);
 
-    it("Should be able to download a large file", (done) => {
+    it("Should be able to download a large file", async (done) => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
