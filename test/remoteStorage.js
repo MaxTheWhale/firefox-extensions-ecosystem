@@ -157,8 +157,10 @@ class GoogleStorage {
         headers: requestHeaders,
         body: file
       });
+      console.log("uploadiniggg " + url);
     
       let response = await fetch(driveRequest)
+      console.log(response);
       if (response.ok) {
         return response.status;
       }
@@ -257,38 +259,54 @@ class GoogleStorage {
         id = await getID(token);
         overwriting = false;
       }
-      let response = await initUpload(token, file, name, id, overwriting);
-      return upload(token, file, response.headers.get('location'));
+      try {
+        let response = await initUpload(token, file, name, id, overwriting);
+        return await upload(token, file, response.headers.get('location'));
+      } catch (error) {
+        throw error;
+      }
     }
 
     this.downloadFile = async (fileName) => {
       await checkToken(false);
-      let id = await getFileID(token, fileName);
-      let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
-      return await download(token, requestURL);
+      try {
+        let id = await getFileID(token, fileName);
+        let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
+        return await download(token, requestURL);
+      } catch (error) {
+        throw error;
+      }
     }
 
     this.deleteFile = async (fileName) => {
       await checkToken(false);
-      let id = await getFileID(token, fileName);
-      let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
-      return await gdelete(token, requestURL);
+      try {
+        let id = await getFileID(token, fileName);
+        let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
+        return await gdelete(token, requestURL);
+      } catch (error) {
+        throw error;
+      }
     }
 
     this.getInfo = async (fileName) => {
       await checkToken(false);
-      if (fileName === undefined) {
-        let list = await getMetadata(token, "");
-        let result = {};
-        list.files.forEach(file => {
-          if (file.kind === "drive#file") {
-            result[file.name] = file;
-          }
-        });
-        return result;
-      }
-      else {
-        return await getMetadata(token, await getFileID(token, fileName));
+      try {
+        if (fileName === undefined) {
+          let list = await getMetadata(token, "");
+          let result = {};
+          list.files.forEach(file => {
+            if (file.kind === "drive#file") {
+              result[file.name] = file;
+            }
+          });
+          return result;
+        }
+        else {
+          return await getMetadata(token, await getFileID(token, fileName));
+        }
+      } catch (error) {
+        throw error;
       }
     }
   }
@@ -390,11 +408,9 @@ class OneDriveStorage {
     }
 
     async function upload(file, url) {
-      console.log("uploading...")
       try {
         const requestHeaders = new Headers();
         let size = getSize(file);
-        console.log(size);
         requestHeaders.append('Content-Range', `bytes 0-${size-1}/${size}`);
         let response = await fetch(url, {
           method: "PUT",
@@ -465,8 +481,6 @@ class OneDriveStorage {
       await init;
       await checkToken();
       let response = await initUpload(name);
-      console.log(response);
-      console.log(response.uploadUrl);
       return await upload(file, response.uploadUrl);
     }
 
@@ -524,7 +538,6 @@ class OneDriveStorage {
       }
       else {
         let info = await getMetadata(await getID(fileName));
-        console.log(info);
         info.mimeType = info.file.mimeType;
         return info;
       }

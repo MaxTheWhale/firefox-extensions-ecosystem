@@ -1,6 +1,6 @@
 describe("Google Drive", function() {
-    var timeOut = 10000;
-    var largeTimeOut = 20000;
+    var timeOut = 5000;
+    var largeTimeOut = 5000;
     var remoteStore;
     var error;
 
@@ -131,8 +131,8 @@ describe("Google Drive", function() {
 });
 
 describe("OneDrive", function() {
-    var timeOut = 10000000;
-    var largeTimeOut = 20000000;
+    var timeOut = 5000;
+    var largeTimeOut = 5000;
     var remoteStore;
     var error;
 
