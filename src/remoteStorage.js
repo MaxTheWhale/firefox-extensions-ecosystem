@@ -160,7 +160,7 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (response.ok) {
-        return response.json();
+        return response.status;
       }
       else {
         console.log("Upload failed");
@@ -297,23 +297,17 @@ class GoogleStorage {
 class OneDriveStorage {
   constructor(client_id) {
     // PRIVATE PROPERTIES
-    let scopes = ["Files.ReadWrite"];
+    let scopes = ["Files.ReadWrite", "offline_access", "openid"];
     let auth_url =
       `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
     let expireTime;
-    let client;
     let init = initialize();
 
     // PRIVATE METHODS
     async function initialize() {
       token = await getAccessToken();
-      client = MicrosoftGraph.Client.init({
-        authProvider: (done) => {
-          done(null, token); //first parameter takes an error if you can't get an access token
-      }
-      });
     }
 
     function extractAccessToken(redirectUri) {
@@ -364,34 +358,116 @@ class OneDriveStorage {
     }
 
     async function getMetadata(id) {
-      return await client.api(`me/drive/items/${id}`).get();
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + token);
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${id}`, {
+        headers: requestHeaders
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+      else {
+        throw response.status;
+      }
     }
 
     async function getID(fileName) {
-      let fileInfo = await client.api(`/me/drive/root:/${fileName}`).get();
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + token);
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}`, {
+        headers: requestHeaders
+      });
+      if (response.ok) {
+        let fileInfo = await response.json();
         if (fileInfo.id !== undefined) {
           return fileInfo.id;
         }
         else throw "No such file";
+      }
+      else {
+        throw response.status;
+      }
     }
 
-    async function upload(file, name) {
-      let response = await client.api(`/me/drive/root/children/${name}/content`).put(file);
-      return response;
+    async function upload(file, url) {
+      console.log("uploading...")
+      try {
+        const requestHeaders = new Headers();
+        let size = getSize(file);
+        console.log(size);
+        requestHeaders.append('Content-Range', `bytes 0-${size-1}/${size}`);
+        let response = await fetch(url, {
+          method: "PUT",
+          headers: requestHeaders,
+          body: file
+        });
+        if (response.ok) {
+          return response.status;
+        }
+        else {
+          throw response.status;
+        }
+      } catch (error) {
+        throw error;
+      }
     }
+
+    async function initUpload(name) {
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + token);
+      requestHeaders.append('Content-Type', 'application/json');
+      let requestBody = {
+        "item": {
+          "@microsoft.graph.conflictBehavior": "replace",
+        }
+      };
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${name}:/createUploadSession`, {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+      else {
+        throw response.status;
+      }
+    };
 
     async function download(fileName) {
-      let id = await getID(fileName);
-      let fileInfo = await client.api(`/me/drive/items/${id}`).get();
-      let response = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
-      return await response.blob();
+      try {
+        const requestHeaders = new Headers();
+        let id = await getID(fileName);
+        requestHeaders.append('Authorization', 'Bearer ' + token);
+        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${id}`, {
+          headers: requestHeaders
+        });
+        if (response.ok) {
+          let fileInfo = await response.json();
+          let fileResponse = await fetch(fileInfo["@microsoft.graph.downloadUrl"]);
+          if (fileResponse.ok) {
+            return await fileResponse.blob();
+          }
+          else {
+            throw fileResponse.status;
+          }
+        }
+        else {
+          throw response.status;
+        }
+      } catch (error) {
+        throw error;
+      }
     }
 
     // PUBLIC METHODS
     this.uploadFile = async (file, name) => {
       await init;
       await checkToken();
-      return await upload(file, name);
+      let response = await initUpload(name);
+      console.log(response);
+      console.log(response.uploadUrl);
+      return await upload(file, response.uploadUrl);
     }
 
     this.downloadFile = async (fileName) => {
@@ -403,26 +479,52 @@ class OneDriveStorage {
     this.deleteFile = async (fileName) => {
       await init;
       await checkToken();
-      let id = await getID(fileName);
-      await client.api(`/me/drive/items/${id}`).delete();
+      try {
+        let id = await getID(fileName);
+        const requestHeaders = new Headers();
+        requestHeaders.append('Authorization', 'Bearer ' + token);
+        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${id}`, {
+          headers: requestHeaders,
+          method: "DELETE"
+        });
+        if (response.ok) {
+          return response.status;
+        }
+        else {
+          throw response.status;
+        }
+      } catch (error) {
+        throw error;
+      }
     }
 
     this.getInfo = async (fileName) => {
       await init;
       await checkToken();
       if (fileName === undefined) {
-        let files = await client.api(`/me/drive/root/children`).get();
-        let result = {};
-        files.value.forEach(file => {
-          if (file.folder === undefined) {
-            file.mimeType = file.file.mimeType;
-            result[file.name] = file;
-          }
+        const requestHeaders = new Headers();
+        requestHeaders.append('Authorization', 'Bearer ' + token);
+        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root/children`, {
+          headers: requestHeaders
         });
-        return result;
+        if (response.ok) {
+          let files = await response.json();
+          let result = {};
+          files.value.forEach(file => {
+            if (file.folder === undefined) {
+              file.mimeType = file.file.mimeType;
+              result[file.name] = file;
+            }
+          });
+          return result;
+        }
+        else {
+          throw response.status;
+        }
       }
       else {
         let info = await getMetadata(await getID(fileName));
+        console.log(info);
         info.mimeType = info.file.mimeType;
         return info;
       }
