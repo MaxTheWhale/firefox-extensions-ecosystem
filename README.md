@@ -25,5 +25,4 @@ Click "Create".
 - The Application Id will be shown near the top of the page. Use this ID when calling `createRemoteStorage`.
 
 ## Testing
-There is an extension in the test folder. It can be loaded in Firefox, and when 
-it is clicked it will open a Jasmine test suite, which will run through a series of tests for each cloud provider.
+There is an extension in the test folder. It can be loaded in Firefox and will run through a series of tests for each cloud provider. Unit tests will run automatically when the extension is loaded. An integration test can be run as well by clicking the extension's icon.

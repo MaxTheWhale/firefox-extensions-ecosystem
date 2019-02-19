@@ -157,10 +157,8 @@ class GoogleStorage {
         headers: requestHeaders,
         body: file
       });
-      console.log("uploadiniggg " + url);
     
       let response = await fetch(driveRequest)
-      console.log(response);
       if (response.ok) {
         return response.status;
       }

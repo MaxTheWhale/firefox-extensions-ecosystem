@@ -30,7 +30,6 @@ let browser = {
     identity: {
         getRedirectURL: function() { return TEST_URL; },
         launchWebAuthFlow: async function(opts) {
-            console.log(opts.url);
             if (opts.url === AUTH_ONEDRIVE) {
                 return `${opts.url}&token=${TEST_TOKEN}`;
             }
@@ -111,8 +110,8 @@ let fetch = async function(request, options) {
         }
     }
 
+    // Define responses for PUT requests
     if (method === "PUT") {
-        console.log("puttt" + url);
         if (url.startsWith(PUT_GOOGLE)) {
             if (!checkAuthHeader(headers)) {
                 return new Response(null, { status: 413 } );
@@ -121,7 +120,6 @@ let fetch = async function(request, options) {
             // should probably check stuff about the file
 
             let id = url.slice(-32);
-            console.log(id);
             Object.keys(IDs).forEach(fileName => {
                 if (IDs[fileName] === id) {
                     current_files.push(fileName);
@@ -131,5 +129,6 @@ let fetch = async function(request, options) {
         }
     }
 
-    return "hi";
+    // Didn't match any requests
+    return new Response(null, { status: 404 } );
 };
