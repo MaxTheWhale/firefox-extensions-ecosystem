@@ -103,7 +103,7 @@ class GoogleStorage {
               resolve(data.ids[0]);
             });
           } else {
-            console.log("ID acquisition failed");
+            console.log("ID acquisition failed: " + response.status);
             reject(response.status);
           }
         });
@@ -141,7 +141,7 @@ class GoogleStorage {
           if (response.ok) {
             resolve(response);
           } else {
-            console.log("Upload initialization failed");
+            console.log("Upload initialization failed: " + response.status);
             reject(response.status);
           }
         });
@@ -163,7 +163,7 @@ class GoogleStorage {
         return response.status;
       }
       else {
-        console.log("Upload failed");
+        console.log("Upload failed: " + response.status);
         throw response.status;
       }
     }
@@ -183,7 +183,7 @@ class GoogleStorage {
         return response.json();
       }
       else {
-        console.log("Getting Metadata failed");
+        console.log("Getting Metadata failed: " + response.status);
         throw response.status;
       }
     }
@@ -207,7 +207,7 @@ class GoogleStorage {
         else throw "No such file"
       }
       else {
-        console.log("File search failed");
+        console.log("File search failed: " + response.status);
         throw response.status;
       }
     }
@@ -225,7 +225,7 @@ class GoogleStorage {
         return await response.blob();
       }
       else {
-        console.log("Download failed");
+        console.log("Download failed: " + response.status);
         throw response.status;
       }
     }
@@ -240,7 +240,7 @@ class GoogleStorage {
     
       let response = await fetch(driveRequest)
       if (!response.ok) {
-        console.log("Delete failed");
+        console.log("Delete failed: " + response.status);
         throw response.status;
       }
       return response.status;

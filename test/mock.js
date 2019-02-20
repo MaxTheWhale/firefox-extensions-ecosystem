@@ -9,6 +9,7 @@ const GENERATEID_GOOGLE = `https://www.googleapis.com/drive/v3/files/generateIds
 const UPLOAD_GOOGLE = `https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable`
 const UPLOADLOCATION_GOOGLE = `https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable&upload_id=`
 const PUT_GOOGLE = `https://www.googleapis.com/upload/drive/v3/files/`
+const FILE_GOOGLE = `https://www.googleapis.com/drive/v3/files/`
 
 let current_files = [];
 let last_search = "";
@@ -18,9 +19,11 @@ const IDs = {
     "infoTest1.txt": "6b5c0b16b4b9447dbf8b2df1359e7bb6",
     "infoTest2.txt": "20500ccb976d490b84ba0930ccea9dc3",
     "overwriteTest.txt": "4b9acac3a50e494a96370ab2c64619f2",
+    "deleteTest.txt": "b758c073e0294a99acc93c5cf5c79e05",
     "largeUploadTest.png": "e1ffd71d685d43e3bd8baa5eef0c614f",
     "largeDownloadTest.png": "9aecf6c98ed74bfca921c22968dd31c1"
 }
+let files = new Map();
 
 function checkAuthHeader(headers) {
     return (headers.get('Authorization') === `Bearer ${TEST_TOKEN}`);
@@ -65,6 +68,9 @@ let fetch = async function(request, options) {
 
     // Define responses for GET requests
     if (method === "GET") {
+        if (url === "large_file.png") {
+            return await window.fetch(url);
+        }
         if (url === VALIDATION_GOOGLE) {
             return new Response(null, { status: 200 } );
         }
@@ -87,6 +93,18 @@ let fetch = async function(request, options) {
                 }
             });
             return new Response(responseBody, { status: 200 } );
+        }
+        if (url.startsWith(FILE_GOOGLE) && url.endsWith("?alt=media")) {
+            if (!checkAuthHeader(headers)) {
+                return new Response(null, { status: 413 } );
+            }
+            let id = url.slice(-42, -10);
+            if (files.get(id)) {
+                return new Response(files.get(id), { status: 200 } );
+            }
+            else {
+                return new Response(null, { status: 404 } );
+            } 
         }
     }
 
@@ -123,9 +141,33 @@ let fetch = async function(request, options) {
             Object.keys(IDs).forEach(fileName => {
                 if (IDs[fileName] === id) {
                     current_files.push(fileName);
+                    files.set(id, file);
                 }
             });
             return new Response(null, { status: 200 } );
+        }
+    }
+
+    // Define responses for DELETE requests
+    if (method === "DELETE") {
+        if (url.startsWith(FILE_GOOGLE)) {
+            if (!checkAuthHeader(headers)) {
+                return new Response(null, { status: 413 } );
+            }
+            let fileFound = false;
+            let id = url.slice(-32);
+            Object.keys(IDs).forEach(fileName => {
+                if (IDs[fileName] === id) {
+                    current_files.splice(current_files.findIndex(item => item === id), 1);
+                    fileFound = true;
+                }
+            });
+            if (fileFound) {
+                return new Response(null, { status: 200 } );
+            }
+            else {
+                return new Response(null, { status: 404 } );
+            }
         }
     }
 
