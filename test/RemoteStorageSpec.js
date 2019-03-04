@@ -1,11 +1,16 @@
 describe("Google Drive", function() {
     var timeOut = 5000;
-    var largeTimeOut = 5000;
+    var largeTimeOut = 10000;
     var remoteStore;
     var error;
 
-    beforeEach(async function() {
+    beforeAll(async function(done) {
         remoteStore = await getGoogleStore();
+        await remoteStore.auth();
+        done();
+    }, 600000);
+
+    beforeEach(async function() {
         error = undefined;
     });
 
@@ -45,7 +50,7 @@ describe("Google Drive", function() {
         expect(text).toMatch("This is a download test");
         expect(error).not.toBeDefined();
         done();
-    }, timeOut);
+    }, largeTimeOut);
 
     it("Should be able to delete a file without error", async (done) => {
         try {
@@ -136,8 +141,13 @@ describe("OneDrive", function() {
     var remoteStore;
     var error;
 
-    beforeEach(async function() {
+    beforeAll(async function(done) {
         remoteStore = await getOneDriveStore();
+        await remoteStore.auth();
+        done();
+    }, 600000);
+
+    beforeEach(async function() {
         error = undefined;
     });
     

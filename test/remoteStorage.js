@@ -247,6 +247,10 @@ class GoogleStorage {
     }
 
     // PUBLIC METHODS
+    this.auth = async () => {
+      await checkToken(false);
+    }
+
     this.uploadFile = async (file, name) => {
       await checkToken(false);
       let id;
@@ -368,7 +372,7 @@ class OneDriveStorage {
     }
 
     async function checkToken() {
-      if (Date.now() >= expireTime) {
+      if (token === "" || Date.now() >= expireTime) {
         await initialize();
       }
     }
@@ -475,6 +479,10 @@ class OneDriveStorage {
     }
 
     // PUBLIC METHODS
+    this.auth = async () => {
+      await checkToken();
+    }
+
     this.uploadFile = async (file, name) => {
       await init;
       await checkToken();
