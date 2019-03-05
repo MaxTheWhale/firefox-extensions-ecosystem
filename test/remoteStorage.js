@@ -319,7 +319,7 @@ class GoogleStorage {
       await checkToken(false);
     }
 
-    this.initFolder = async (appName, newAppFlag) => { //New app flag indicates folder hasn't been created for app yet
+    this.initFolder = async () => { //New app flag indicates folder hasn't been created for app yet
       let apiFolderName = "storage.remote";
       await checkToken(false);
       let initFlag = false;
@@ -334,20 +334,20 @@ class GoogleStorage {
         }
       }
       try {
-        appFolderID = await getFolderID(token, appName, apiFolderID);
+        appFolderID = await getFolderID(token, REDIRECT_URL, apiFolderID);
       } catch (error) {
         appFolderID = await getID(token);
         initFlag = true;
       }
       if (initFlag) {
         try {
-          await initFolder(token, appName, appFolderID, apiFolderID, false);
+          await initFolder(token, REDIRECT_URL, appFolderID, apiFolderID, false);
         } catch (error) {
           throw error;
         }
-      } else {
+      } /*else {
         if (newAppFlag) throw "App name already taken, please choose a new one";
-      }
+      }*/
     }
 
     this.uploadFile = async (file, name) => {
@@ -650,10 +650,10 @@ class OneDriveStorage {
   }
 }
 
-async function createRemoteStorage(storageProvider, client_id, appName, newAppFlag) { //Need to specify in documentation, will give directory
+async function createRemoteStorage(storageProvider, client_id) { //Need to specify in documentation, will give directory
   if (storageProvider.toLowerCase() === "google") {
     let googleStorage = new GoogleStorage(client_id);
-    await googleStorage.initFolder(appName, newAppFlag);
+    await googleStorage.initFolder(); //New app flag may be pointless
     return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
