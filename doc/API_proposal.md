@@ -60,3 +60,8 @@ interface. The following methods are available:
 | `downloadFile(fileName)` | When given a file name, it will attempt to download the file from the cloud storage. If successful, it will return the file. If the download fails, an error will be thrown with the HTTP status code. | Blob object containing the file
 | `deleteFile(fileName)` | When given a file name, it will attempt to delete the file from the cloud storage. If the file doesn't exist, it will throw an error. If the delete fails for any other reason, an error will be thrown with the HTTP status code. | HTTP status code
 
+## Limitations
+- Google Drive requires the permissions "\*://www.googleapis.com/\*" and "\*://accounts.google.com/\*" to be given in the manifest, or else authentication will fail due to CORS errors.
+- OneDrive currently only supports uploads up to 60MB. This could be bypassed using multi-part uploads, but it seems unlikely that files this large will need to be uploaded from within an extension.
+- OneDrive authentication currently needs to be performed every time the extension runs, as the session is not remembered due to some unknown issue.
+- OneDrive does not support the permissions to only allow the extension to access files it creates. This could create the potential risk to modify the users other files on the cloud, although the developer should be easily able to prevent this.
