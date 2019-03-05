@@ -191,7 +191,8 @@ class GoogleStorage {
         else {
           request = {
             "id": `${id}`,
-            "name": `${name}`
+            "name": `${name}`,
+            "parents": [`${appFolderID}`]
           };
           requestURL += `?uploadType=resumable`;
         }
@@ -259,7 +260,7 @@ class GoogleStorage {
       let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`);
       let requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + accessToken);
-
+      requestURL += `&parents+in+'${appFolderID}'`
       let driveRequest = new Request(requestURL, {
         method: "GET",
         headers: requestHeaders
@@ -649,10 +650,10 @@ class OneDriveStorage {
   }
 }
 
-async function createRemoteStorage(storageProvider, client_id, appName) { //Need to specify in documentation, will give directory
+async function createRemoteStorage(storageProvider, client_id, appName, newAppFlag) { //Need to specify in documentation, will give directory
   if (storageProvider.toLowerCase() === "google") {
     let googleStorage = new GoogleStorage(client_id);
-    await googleStorage.initFolder(appName, true);
+    await googleStorage.initFolder(appName, newAppFlag);
     return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {

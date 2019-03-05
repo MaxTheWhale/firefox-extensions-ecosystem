@@ -1,5 +1,5 @@
 describe("Google Drive", function() {
-    var timeOut = 5000;
+    var timeOut = 10000;
     var largeTimeOut = 20000;
     var remoteStore;
     var error;

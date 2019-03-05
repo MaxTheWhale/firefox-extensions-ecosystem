@@ -3,7 +3,7 @@ let onedriveStore;
 
 async function getGoogleStore() {
     if (googleStore === undefined) {
-        googleStore = await createRemoteStorage("Google", "887401722713-n61d7cl8o92cjol2sid7q31t9gs28uqs.apps.googleusercontent.com", "TestApp");
+        googleStore = await createRemoteStorage("Google", "887401722713-n61d7cl8o92cjol2sid7q31t9gs28uqs.apps.googleusercontent.com", "TestApp", false);
     }
     return googleStore;
 }
