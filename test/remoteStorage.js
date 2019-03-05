@@ -43,6 +43,8 @@ class GoogleStorage {
     let validation_url = "https://www.googleapis.com/oauth2/v3/tokeninfo";
     let token = "";
     let expireTime;
+    let appFolderID;
+    let apiFolderID;
 
     // PRIVATE METHODS
 
@@ -104,6 +106,71 @@ class GoogleStorage {
             });
           } else {
             console.log("ID acquisition failed: " + response.status);
+            reject(response.status);
+          }
+        });
+    
+      });
+    };
+
+    async function getFolderID(accessToken, name, parentID) {
+      let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${name}'`);
+      let requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+      requestURL += `&parents+in+'${parentID}'`
+      let driveRequest = new Request(requestURL, {
+        method: "GET",
+        headers: requestHeaders
+      });
+    
+      let response = await fetch(driveRequest)
+      if (response.ok) {
+        let res = await response.json();
+        if (res.files[0] !== undefined) {
+          return res.files[0].id;
+        }
+        else throw "No such file"
+      }
+      else {
+        console.log("File search failed: " + response.status);
+        throw response.status;
+      }
+    }
+
+    function initFolder(accessToken, name, id, parentID, apiFolder) {
+      return new Promise(function (resolve, reject) {
+        let requestURL = "https://www.googleapis.com/drive/v3/files/";
+        let request = {};
+        let requestHeaders = new Headers();
+        requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+        requestHeaders.append('Content-Type', 'application/json');
+        if (apiFolder) {
+          request = {
+            "kind": "drive#file",
+            "id": `${id}`,
+            "name": "storage.remote",
+            "mimeType": "application/vnd.google-apps.folder"
+          };
+        } else {
+          request = {
+            "kind": "drive#file",
+            "id": `${id}`,
+            "name": `${name}`,
+            "mimeType": "application/vnd.google-apps.folder",
+            "parents": [`${parentID}`]
+          }
+        }
+        let driveRequest = new Request(requestURL, {
+          method: "POST",
+          headers: requestHeaders,
+          body: JSON.stringify(request)
+        });
+    
+        fetch(driveRequest).then((response) => {
+          if (response.ok) {
+            resolve(response);
+          } else {
+            console.log("Folder initialization failed: " + response.status);
             reject(response.status);
           }
         });
@@ -249,6 +316,37 @@ class GoogleStorage {
     // PUBLIC METHODS
     this.auth = async () => {
       await checkToken(false);
+    }
+
+    this.initFolder = async (appName, newAppFlag) => { //New app flag indicates folder hasn't been created for app yet
+      let apiFolderName = "storage.remote";
+      await checkToken(false);
+      let initFlag = false;
+      try {
+        apiFolderID = await getFileID(token, apiFolderName);
+      } catch (error) {
+        apiFolderID = await getID(token);
+        try {
+          await initFolder(token, apiFolderName, apiFolderID, '', true);
+        } catch (error) {
+          throw error;
+        }
+      }
+      try {
+        appFolderID = await getFolderID(token, appName, apiFolderID);
+      } catch (error) {
+        appFolderID = await getID(token);
+        initFlag = true;
+      }
+      if (initFlag) {
+        try {
+          await initFolder(token, appName, appFolderID, apiFolderID, false);
+        } catch (error) {
+          throw error;
+        }
+      } else {
+        if (newAppFlag) throw "App name already taken, please choose a new one";
+      }
     }
 
     this.uploadFile = async (file, name) => {
@@ -551,9 +649,10 @@ class OneDriveStorage {
   }
 }
 
-async function createRemoteStorage(storageProvider, client_id) {
+async function createRemoteStorage(storageProvider, client_id, appName) { //Need to specify in documentation, will give directory
   if (storageProvider.toLowerCase() === "google") {
     let googleStorage = new GoogleStorage(client_id);
+    await googleStorage.initFolder(appName, true);
     return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
