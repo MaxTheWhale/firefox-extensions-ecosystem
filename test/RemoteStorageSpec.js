@@ -135,7 +135,7 @@ describe("Google Drive", function() {
 
 });
 
-describe("OneDrive", function() {
+xdescribe("OneDrive", function() {
     var timeOut = 5000;
     var largeTimeOut = 5000;
     var remoteStore;
