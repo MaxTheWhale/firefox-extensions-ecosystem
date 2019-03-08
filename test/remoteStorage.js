@@ -510,11 +510,14 @@ class OneDriveStorage {
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
     let expireTime;
+    let appFolderID;
+    let apiFolderID;
     let init = initialize();
 
     // PRIVATE METHODS
     async function initialize() {
       token = await getAccessToken();
+      await initFolder();
     }
 
     function extractAccessToken(redirectUri) {
@@ -564,6 +567,46 @@ class OneDriveStorage {
       }
     }
 
+    async function initFolder() {
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + token);
+      requestHeaders.append('Content-Type', 'application/json');
+      let requestBody = {
+        "name": `storage.remote`,
+        "folder": { },
+        "@microsoft.graph.conflictBehavior": "fail"
+      };
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root/children`, {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
+      });
+      if (response.ok) {
+        console.log(await response.json());
+      }
+      else {
+        console.log(response.status);
+        console.log(await response.json())
+      }
+      requestBody = {
+        "name": `${browser.runtime.id}`,
+        "folder": { },
+        "@microsoft.graph.conflictBehavior": "fail"
+      };
+      response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/children`, {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
+      });
+      if (response.ok) {
+        console.log(await response.json());
+      }
+      else {
+        console.log(response.status);
+        console.log(await response.json())
+      }
+    };
+
     async function getMetadata(id) {
       const requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + token);
@@ -581,7 +624,7 @@ class OneDriveStorage {
     async function getID(fileName) {
       const requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + token);
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}:/${fileName}`, {
         headers: requestHeaders
       });
       if (response.ok) {
@@ -626,7 +669,7 @@ class OneDriveStorage {
           "@microsoft.graph.conflictBehavior": "replace",
         }
       };
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${name}:/createUploadSession`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}:/${name}:/createUploadSession`, {
         method: "POST",
         headers: requestHeaders,
         body: JSON.stringify(requestBody)
@@ -711,7 +754,7 @@ class OneDriveStorage {
       if (fileName === undefined) {
         const requestHeaders = new Headers();
         requestHeaders.append('Authorization', 'Bearer ' + token);
-        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root/children`, {
+        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}/children`, {
           headers: requestHeaders
         });
         if (response.ok) {

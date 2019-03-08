@@ -34,6 +34,13 @@ const getMIME = function(content) {
   return request.headers.get("Content-Type");
 }
 
+class Folder {
+  constructor(folderID, folderName) {
+    this.id = folderID;
+    this.name = folderName;
+  }
+}
+
 class GoogleStorage {
   constructor(client_id) {
     // PRIVATE PROPERTIES
@@ -43,6 +50,8 @@ class GoogleStorage {
     let validation_url = "https://www.googleapis.com/oauth2/v3/tokeninfo";
     let token = "";
     let expireTime;
+    let appFolderID;
+    let apiFolderID;
 
     // PRIVATE METHODS
 
@@ -110,8 +119,73 @@ class GoogleStorage {
     
       });
     };
+
+    async function getFolderID(accessToken, name, parentID) {
+      let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${name}'`);
+      let requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+      requestURL += `&parents+in+'${parentID}'`
+      let driveRequest = new Request(requestURL, {
+        method: "GET",
+        headers: requestHeaders
+      });
     
-    function initUpload(accessToken, file, name, id, overwriting) {
+      let response = await fetch(driveRequest)
+      if (response.ok) {
+        let res = await response.json();
+        if (res.files[0] !== undefined) {
+          return res.files[0].id;
+        }
+        else throw "No such file"
+      }
+      else {
+        console.log("File search failed: " + response.status);
+        throw response.status;
+      }
+    }
+
+    function initFolder(accessToken, name, id, parentID, apiFolder) {
+      return new Promise(function (resolve, reject) {
+        let requestURL = "https://www.googleapis.com/drive/v3/files/";
+        let request = {};
+        let requestHeaders = new Headers();
+        requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+        requestHeaders.append('Content-Type', 'application/json');
+        if (apiFolder) {
+          request = {
+            "kind": "drive#file",
+            "id": `${id}`,
+            "name": "storage.remote",
+            "mimeType": "application/vnd.google-apps.folder"
+          };
+        } else {
+          request = {
+            "kind": "drive#file",
+            "id": `${id}`,
+            "name": `${name}`,
+            "mimeType": "application/vnd.google-apps.folder",
+            "parents": [`${parentID}`]
+          }
+        }
+        let driveRequest = new Request(requestURL, {
+          method: "POST",
+          headers: requestHeaders,
+          body: JSON.stringify(request)
+        });
+    
+        fetch(driveRequest).then((response) => {
+          if (response.ok) {
+            resolve(response);
+          } else {
+            console.log("Folder initialization failed: " + response.status);
+            reject(response.status);
+          }
+        });
+    
+      });
+    };
+    
+    function initUpload(accessToken, file, name, id, overwriting, parent) {
       return new Promise(function (resolve, reject) {
         let requestURL = "https://www.googleapis.com/upload/drive/v3/files/";
         let request = {};
@@ -124,7 +198,8 @@ class GoogleStorage {
         else {
           request = {
             "id": `${id}`,
-            "name": `${name}`
+            "name": `${name}`,
+            "parents": [`${parent}`]
           };
           requestURL += `?uploadType=resumable`;
         }
@@ -187,12 +262,32 @@ class GoogleStorage {
         throw response.status;
       }
     }
+    
+    async function getParents(accessToken, id) {
+      let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?fields=parents`;
+      let requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + accessToken);
+
+      let driveRequest = new Request(requestURL, {
+        method: "GET",
+        headers: requestHeaders
+      });
+    
+      let response = await fetch(driveRequest)
+      if (response.ok) {
+        return response.json();
+      }
+      else {
+        console.log("Getting Metadata failed: " + response.status);
+        throw response.status;
+      }
+    }
 
     async function getFileID(accessToken, fileName) {
       let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`);
       let requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + accessToken);
-
+      requestURL += `&parents+in+'${appFolderID}'`
       let driveRequest = new Request(requestURL, {
         method: "GET",
         headers: requestHeaders
@@ -247,8 +342,45 @@ class GoogleStorage {
     }
 
     // PUBLIC METHODS
-    this.uploadFile = async (file, name) => {
+    this.auth = async () => {
       await checkToken(false);
+    }
+
+    this.initFolder = async () => { //New app flag indicates folder hasn't been created for app yet
+      let apiFolderName = "storage.remote";
+      await checkToken(false);
+      let initFlag = false;
+      try {
+        apiFolderID = await getFileID(token, apiFolderName);
+      } catch (error) {
+        apiFolderID = await getID(token);
+        try {
+          await initFolder(token, apiFolderName, apiFolderID, '', true);
+        } catch (error) {
+          throw error;
+        }
+      }
+      try {
+        appFolderID = await getFolderID(token, REDIRECT_URL, apiFolderID);
+      } catch (error) {
+        appFolderID = await getID(token);
+        initFlag = true;
+      }
+      if (initFlag) {
+        try {
+          await initFolder(token, REDIRECT_URL, appFolderID, apiFolderID, false);
+        } catch (error) {
+          throw error;
+        }
+      } /*else {
+        if (newAppFlag) throw "App name already taken, please choose a new one";
+      }*/
+    }
+
+    this.uploadFile = async (file, name, parent) => {
+      await checkToken(false);
+      let par = parent;
+      if (!par) par = appFolderID;
       let id;
       let overwriting = true;
       try {
@@ -258,7 +390,7 @@ class GoogleStorage {
         overwriting = false;
       }
       try {
-        let response = await initUpload(token, file, name, id, overwriting);
+        let response = await initUpload(token, file, name, id, overwriting, par);
         return await upload(token, file, response.headers.get('location'));
       } catch (error) {
         throw error;
@@ -282,6 +414,65 @@ class GoogleStorage {
         let id = await getFileID(token, fileName);
         let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
         return await gdelete(token, requestURL);
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    this.createFolder = async(parentID, folderName) => {
+      await checkToken(false);
+      let parID = parentID;
+      if (parID === "") parID = appFolderID;
+      if (folderName === "") throw "Please provide a name for the folder";
+      try {
+        let id = await getID(token);
+        await initFolder(token, folderName, id, parID, false);
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    this.getFolders = async() => { //Returns item accessed by ids, may want to flip before returning so entries accessed by name
+      await checkToken(false);
+      try {
+        let list = await getMetadata(token, "");
+        let folders = [];
+        let result = [];
+        let pars = [];
+        list.files.forEach(file => {
+          if (file.mimeType === "application/vnd.google-apps.folder") {
+            folders[file.id] = file;
+          }
+        });
+        result[appFolderID] = new Folder(folders[appFolderID].id, folders[appFolderID].name); //Ensures all folders added are children of isolated folder
+        for (let i in folders) {
+          pars[i] = await getParents(token, i);
+        }
+        let count = 0;
+        while (count != -1) {
+          for (let i in folders) { //For all folders in folders
+            let flag = false;
+            for (let j in result) {
+              if (pars[i].parents.includes(j)) {
+                flag = true;
+                break;
+              }
+            }
+            if (flag) {
+                result[i] = new Folder(folders[i].id, folders[i].name); //Add i to result
+                delete folders[i];
+                count = count + 1; //Increase count
+            }
+          }
+          if (count === 0) { //If no folders moved, end (no more sub-folders possible)
+            count = -1
+          } else count = 0;
+        }
+        // let returns = []; //Could do this, but only if we prevent duplicate file names
+        // for (let i in result) {
+        //   returns[result[i].name] = result[i];
+        // }
+        return result; //Could return tuple of result and aprents to indicate which file is a child of which folders
       } catch (error) {
         throw error;
       }
@@ -319,11 +510,14 @@ class OneDriveStorage {
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
     let expireTime;
+    let appFolderID;
+    let apiFolderID;
     let init = initialize();
 
     // PRIVATE METHODS
     async function initialize() {
       token = await getAccessToken();
+      await initFolder();
     }
 
     function extractAccessToken(redirectUri) {
@@ -368,10 +562,50 @@ class OneDriveStorage {
     }
 
     async function checkToken() {
-      if (Date.now() >= expireTime) {
+      if (token === "" || Date.now() >= expireTime) {
         await initialize();
       }
     }
+
+    async function initFolder() {
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + token);
+      requestHeaders.append('Content-Type', 'application/json');
+      let requestBody = {
+        "name": `storage.remote`,
+        "folder": { },
+        "@microsoft.graph.conflictBehavior": "fail"
+      };
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root/children`, {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
+      });
+      if (response.ok) {
+        console.log(await response.json());
+      }
+      else {
+        console.log(response.status);
+        console.log(await response.json())
+      }
+      requestBody = {
+        "name": `${browser.runtime.id}`,
+        "folder": { },
+        "@microsoft.graph.conflictBehavior": "fail"
+      };
+      response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/children`, {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
+      });
+      if (response.ok) {
+        console.log(await response.json());
+      }
+      else {
+        console.log(response.status);
+        console.log(await response.json())
+      }
+    };
 
     async function getMetadata(id) {
       const requestHeaders = new Headers();
@@ -390,7 +624,7 @@ class OneDriveStorage {
     async function getID(fileName) {
       const requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + token);
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}:/${fileName}`, {
         headers: requestHeaders
       });
       if (response.ok) {
@@ -435,7 +669,7 @@ class OneDriveStorage {
           "@microsoft.graph.conflictBehavior": "replace",
         }
       };
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${name}:/createUploadSession`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}:/${name}:/createUploadSession`, {
         method: "POST",
         headers: requestHeaders,
         body: JSON.stringify(requestBody)
@@ -475,6 +709,10 @@ class OneDriveStorage {
     }
 
     // PUBLIC METHODS
+    this.auth = async () => {
+      await checkToken();
+    }
+
     this.uploadFile = async (file, name) => {
       await init;
       await checkToken();
@@ -516,7 +754,7 @@ class OneDriveStorage {
       if (fileName === undefined) {
         const requestHeaders = new Headers();
         requestHeaders.append('Authorization', 'Bearer ' + token);
-        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root/children`, {
+        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}/children`, {
           headers: requestHeaders
         });
         if (response.ok) {
@@ -543,9 +781,18 @@ class OneDriveStorage {
   }
 }
 
-async function createRemoteStorage(storageProvider, client_id) {
+async function createRemoteStorage(storageProvider, client_id) { //Need to specify in documentation, will give directory
   if (storageProvider.toLowerCase() === "google") {
     let googleStorage = new GoogleStorage(client_id);
+    await googleStorage.initFolder(); //New app flag may be pointless
+    //test code
+    let result = await googleStorage.getFolders();
+    let count = 1;
+    for (let i in result) {
+      await googleStorage.createFolder(i, "Test" + count);
+      count = count + 1;
+    }
+    //test code
     return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
