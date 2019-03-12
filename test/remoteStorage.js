@@ -1,4 +1,5 @@
-const REDIRECT_URL = browser.identity.getRedirectURL();
+const REDIRECT_URL = browser.identity.getRedirectURL()
+const REDIRECT_URL_MOZ = browser.identity.getRedirectURL().replace('extensions.allizom.org','extensions.mozilla.org')
 
 const getSize = function(content) {
   var className = content.constructor.name;
@@ -506,7 +507,7 @@ class OneDriveStorage {
     // PRIVATE PROPERTIES
     let scopes = ["Files.ReadWrite", "offline_access", "openid"];
     let auth_url =
-      `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
+      `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL_MOZ)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
     let expireTime;
