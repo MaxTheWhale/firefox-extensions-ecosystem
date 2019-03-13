@@ -31,6 +31,8 @@ existing [`storage.local`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-
 APIs. Therefore extensions should not be able to interfere with other
 extensions' files or the users own files.
 
+All the files that an extension creates are stored in a folder named using the extensions' ID, inside a parent folder called storage.remote. This means that extensions shouldn't be able to interfere with either other files on the cloud as well as other extensions' files.
+
 ## Metadata
 When retrieving metadata for files, it will be returned as an object with
 key-value pairs for each field. Only the following fields are guaranteed to be
@@ -64,4 +66,16 @@ interface. The following methods are available:
 - Google Drive requires the permissions "\*://www.googleapis.com/\*" and "\*://accounts.google.com/\*" to be given in the manifest, or else authentication will fail due to CORS errors.
 - OneDrive currently only supports uploads up to 60MB. This could be bypassed using multi-part uploads, but it seems unlikely that files this large will need to be uploaded from within an extension.
 - OneDrive authentication currently needs to be performed every time the extension runs, as the session is not remembered due to some unknown issue.
-- OneDrive does not support the permissions to only allow the extension to access files it creates. This could create the potential risk to modify the users other files on the cloud, although the developer should be easily able to prevent this.
+- OneDrive does not support the permissions to only allow the extension to access files it creates. This could create the potential risk to modify the users other files on the cloud, although the library has been designed in a way that extensions' data is kept isolated.
+
+## EXPERIMENTAL
+Folder support is being looked into, and currently there is an implementation working for Google Drive. It exposes several new methods to the user, which are briefly summarised below:
+
+| Method    | Description |
+|-----------|-------------|
+| `getFolders()` | Gets a list of all folders created by an extension, including sub-folders. Returns a list of Folder objects which contain the folder ID and name.
+| `createFolder(parentID, folderName)` | If parentID is empty, a new folder will be created at the root of the extensions' storage with the name folderName. If the parentID is given, it will be created as a sub-folder within that parent.
+| `uploadFile(file, fileName, parent)` | uploadFile works as above except that there is now a parent argument, which can be used to specify a folder to upload the new file into.
+
+
+

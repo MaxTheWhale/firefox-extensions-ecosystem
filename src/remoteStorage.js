@@ -1,4 +1,5 @@
-const REDIRECT_URL = browser.identity.getRedirectURL();
+const REDIRECT_URL = browser.identity.getRedirectURL()
+const REDIRECT_URL_MOZ = browser.identity.getRedirectURL().replace('extensions.allizom.org','extensions.mozilla.org')
 
 const getSize = function(content) {
   var className = content.constructor.name;
@@ -506,12 +507,10 @@ class OneDriveStorage {
     // PRIVATE PROPERTIES
     let scopes = ["Files.ReadWrite", "offline_access", "openid"];
     let auth_url =
-      `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(' '))}`;
+      `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL_MOZ)}&scope=${encodeURIComponent(scopes.join(' '))}`;
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
     let expireTime;
-    let appFolderID;
-    let apiFolderID;
     let init = initialize();
 
     // PRIVATE METHODS
@@ -581,12 +580,10 @@ class OneDriveStorage {
         headers: requestHeaders,
         body: JSON.stringify(requestBody)
       });
-      if (response.ok) {
-        console.log(await response.json());
-      }
-      else {
-        console.log(response.status);
-        console.log(await response.json())
+      if (!response.ok) {
+        if (response.status != 409) {
+          throw response.status
+        }
       }
       requestBody = {
         "name": `${browser.runtime.id}`,
@@ -598,12 +595,10 @@ class OneDriveStorage {
         headers: requestHeaders,
         body: JSON.stringify(requestBody)
       });
-      if (response.ok) {
-        console.log(await response.json());
-      }
-      else {
-        console.log(response.status);
-        console.log(await response.json())
+      if (!response.ok) {
+        if (response.status != 409) {
+          throw response.status
+        }
       }
     };
 
@@ -624,7 +619,7 @@ class OneDriveStorage {
     async function getID(fileName) {
       const requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + token);
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}:/${fileName}`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote/${browser.runtime.id}/${fileName}`, {
         headers: requestHeaders
       });
       if (response.ok) {
@@ -635,6 +630,7 @@ class OneDriveStorage {
         else throw "No such file";
       }
       else {
+        console.log(result);
         throw response.status;
       }
     }
@@ -669,7 +665,7 @@ class OneDriveStorage {
           "@microsoft.graph.conflictBehavior": "replace",
         }
       };
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}:/${name}:/createUploadSession`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote/${browser.runtime.id}/${name}:/createUploadSession`, {
         method: "POST",
         headers: requestHeaders,
         body: JSON.stringify(requestBody)
@@ -754,7 +750,7 @@ class OneDriveStorage {
       if (fileName === undefined) {
         const requestHeaders = new Headers();
         requestHeaders.append('Authorization', 'Bearer ' + token);
-        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote:/${browser.runtime.id}/children`, {
+        let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote/${browser.runtime.id}:/children`, {
           headers: requestHeaders
         });
         if (response.ok) {
