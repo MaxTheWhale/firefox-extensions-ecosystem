@@ -36,9 +36,19 @@ const getMIME = function(content) {
 }
 
 class Folder {
-  constructor(folderID, folderName) {
+  constructor(folderID, folderName, storageProvider) {
     this.id = folderID;
     this.name = folderName;
+    this.store = storageProvider;
+  }
+}
+
+class StoreFile {
+  constructor(fileID, fileName, mimeType, storageProvider) {
+    this.id = fileID;
+    this.name = fileName;
+    this.mimetype = mimeType;
+    this.store = storageProvider;
   }
 }
 
@@ -378,10 +388,12 @@ class GoogleStorage {
       }*/
     }
 
-    this.uploadFile = async (file, name, parent) => {
+    this.uploadFile = async (file, name, parentID) => {
       await checkToken(false);
-      let par = parent;
+      let par = parentID;
       if (!par) par = appFolderID;
+      let files = await this.getItems(parentID, false);
+      if (files[name] != null) throw `Provided name: ${name} already in use in this directory`
       let id;
       let overwriting = true;
       try {
@@ -425,6 +437,8 @@ class GoogleStorage {
       let parID = parentID;
       if (parID === "") parID = appFolderID;
       if (folderName === "") throw "Please provide a name for the folder";
+      let folders = await this.getItems(parentID, true);
+      if (folders[folderName] != null) throw `Provided name: ${name} already in use in this directory`
       try {
         let id = await getID(token);
         await initFolder(token, folderName, id, parID, false);
@@ -433,47 +447,47 @@ class GoogleStorage {
       }
     }
 
-    this.getFolders = async() => { //Returns item accessed by ids, may want to flip before returning so entries accessed by name
+    this.getItems = async(parentID, folderFlag) => { //Returns item accessed by ids, may want to flip before returning so entries accessed by name
       await checkToken(false);
+      let parID = parentID;
+      if (parID === "") parID = appFolderID;
       try {
         let list = await getMetadata(token, "");
-        let folders = [];
+        let items = [];
         let result = [];
         let pars = [];
         list.files.forEach(file => {
-          if (file.mimeType === "application/vnd.google-apps.folder") {
-            folders[file.id] = file;
+          if (folderFlag) {
+            if (file.mimeType === "application/vnd.google-apps.folder") {
+              items[file.id] = file;
+            }
+          } else {
+            if (file.mimeType !== "application/vnd.google-apps.folder") {
+              items[file.id] = file;
+            }
           }
         });
-        result[appFolderID] = new Folder(folders[appFolderID].id, folders[appFolderID].name); //Ensures all folders added are children of isolated folder
-        for (let i in folders) {
+        // result[appFolderID] = new Folder(folders[appFolderID].id, folders[appFolderID].name); //Ensures all folders added are children of isolated folder
+        for (let i in items) {
           pars[i] = await getParents(token, i);
         }
-        let count = 0;
-        while (count != -1) {
-          for (let i in folders) { //For all folders in folders
-            let flag = false;
-            for (let j in result) {
-              if (pars[i].parents.includes(j)) {
-                flag = true;
-                break;
-              }
-            }
-            if (flag) {
-                result[i] = new Folder(folders[i].id, folders[i].name); //Add i to result
-                delete folders[i];
-                count = count + 1; //Increase count
-            }
+        for (let i in items) { //For all folders in folders
+          let flag = false;
+          // console.log(folders[i].name);
+          if (pars[i].parents.includes(parID)) {
+            flag = true;
           }
-          if (count === 0) { //If no folders moved, end (no more sub-folders possible)
-            count = -1
-          } else count = 0;
+          if (flag) {
+              if (folderFlag) result[i] = new Folder(items[i].id, items[i].name, 'google'); //Add i to result
+              else result[i] = new StoreFile(items[i].id, items[i].name, items[i].mimeType, 'google');
+              // delete folders[i];
+          }
         }
-        // let returns = []; //Could do this, but only if we prevent duplicate file names
-        // for (let i in result) {
-        //   returns[result[i].name] = result[i];
-        // }
-        return result; //Could return tuple of result and aprents to indicate which file is a child of which folders
+        let returns = []; //Flips list so folders are referred to by name instead of id
+        for (let i in result) {
+          returns[result[i].name] = result[i];
+        }
+        return returns; //Could return tuple of result and aprents to indicate which file is a child of which folders
       } catch (error) {
         throw error;
       }
@@ -781,14 +795,18 @@ async function createRemoteStorage(storageProvider, client_id) { //Need to speci
   if (storageProvider.toLowerCase() === "google") {
     let googleStorage = new GoogleStorage(client_id);
     await googleStorage.initFolder(); //New app flag may be pointless
-    //test code
-    let result = await googleStorage.getFolders();
-    let count = 1;
-    for (let i in result) {
-      await googleStorage.createFolder(i, "Test" + count);
-      count = count + 1;
-    }
-    //test code
+    // //test code
+    // let result = await googleStorage.getItems('', true); //Slow here
+    // for (let i in result) {
+    //   // await googleStorage.createFolder(result[i].id, 'Test'); //Slow here
+    //   console.log(i);
+    // }
+    // await googleStorage.uploadFile('Test', 'Test.txt', result['HelloWorld'].id);
+    // let result2 = await googleStorage.getItems(result['HelloWorld'].id, false); //Slow here
+    // for (let i in result2) {
+    //   console.log(i);
+    // }
+    // //test code
     return googleStorage;
   }
   else if (storageProvider.toLowerCase() === "onedrive") {
