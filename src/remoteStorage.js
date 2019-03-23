@@ -525,6 +525,7 @@ class OneDriveStorage {
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
     let expireTime;
+    let appFolderID;
 
     // PRIVATE METHODS
     async function initialize() {
@@ -612,6 +613,22 @@ class OneDriveStorage {
         if (response.status != 409) {
           throw response.status
         }
+      }
+
+      const requestHeaders2 = new Headers();
+      requestHeaders2.append('Authorization', 'Bearer ' + token);
+      response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote/${browser.runtime.id}`, {
+        headers: requestHeaders2
+      });
+      if (response.ok) {
+        let fileInfo = await response.json();
+        if (fileInfo.id !== undefined) {
+          appFolderID = fileInfo.id;
+        }
+        else throw "Failed getting appFolder ID";
+      }
+      else {
+        throw response.status;
       }
     };
 
@@ -752,6 +769,33 @@ class OneDriveStorage {
       } catch (error) {
         throw error;
       }
+    }
+
+    this.getItems = async (parentID, folderFlag) => {
+      await checkToken();
+      if (parentID === "") parentID = appFolderID;
+
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + token);
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${parentID}/children`, {
+          headers: requestHeaders
+      });
+      let items = await response.json();
+      console.log(items);
+      let result = {};
+      items.value.forEach(item => {
+        if (folderFlag) {
+          if (item.folder !== undefined) {
+            result[item.name] = new Folder(item.id, item.name, "onedrive");
+          }
+        }
+        else {
+          if (item.folder === undefined) {
+            result[item.name] = new StoreFile(item.id, item.name, item.file.mimeType, "onedrive");
+          }
+        }
+      });
+      return result;
     }
 
     this.getInfo = async (fileName) => {
