@@ -525,7 +525,6 @@ class OneDriveStorage {
     let validation_url = "https://graph.microsoft.com/v1.0/me/drive/";
     let token = "";
     let expireTime;
-    let init = initialize();
 
     // PRIVATE METHODS
     async function initialize() {
@@ -724,20 +723,17 @@ class OneDriveStorage {
     }
 
     this.uploadFile = async (file, name) => {
-      await init;
       await checkToken();
       let response = await initUpload(name);
       return await upload(file, response.uploadUrl);
     }
 
     this.downloadFile = async (fileName) => {
-      await init;
       await checkToken();
       return await download(fileName);
     }
 
     this.deleteFile = async (fileName) => {
-      await init;
       await checkToken();
       try {
         let id = await getID(fileName);
@@ -759,7 +755,6 @@ class OneDriveStorage {
     }
 
     this.getInfo = async (fileName) => {
-      await init;
       await checkToken();
       if (fileName === undefined) {
         const requestHeaders = new Headers();
