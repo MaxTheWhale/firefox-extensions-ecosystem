@@ -390,9 +390,8 @@ class GoogleStorage {
 
     this.uploadFile = async (file, name, parentID) => {
       await checkToken(false);
-      let par = parentID;
-      if (!par) par = appFolderID;
-      let files = await this.getItems(parentID, false);
+      if (!parentID) parentID = appFolderID;
+      let files = await this.getItems(false, parentID);
       if (files[name] != null) throw `Provided name: ${name} already in use in this directory`
       let id;
       let overwriting = true;
@@ -403,7 +402,7 @@ class GoogleStorage {
         overwriting = false;
       }
       try {
-        let response = await initUpload(token, file, name, id, overwriting, par);
+        let response = await initUpload(token, file, name, id, overwriting, parentID);
         return await upload(token, file, response.headers.get('location'));
       } catch (error) {
         throw error;
@@ -432,25 +431,23 @@ class GoogleStorage {
       }
     }
 
-    this.createFolder = async(parentID, folderName) => {
+    this.createFolder = async(folderName, parentID) => {
       await checkToken(false);
-      let parID = parentID;
-      if (parID === "") parID = appFolderID;
+      if (!parentID) parentID = appFolderID;
       if (folderName === "") throw "Please provide a name for the folder";
-      let folders = await this.getItems(parentID, true);
+      let folders = await this.getItems(true, parentID);
       if (folders[folderName] != null) throw `Provided name: ${name} already in use in this directory`
       try {
         let id = await getID(token);
-        await initFolder(token, folderName, id, parID, false);
+        await initFolder(token, folderName, id, parentID, false);
       } catch (error) {
         throw error;
       }
     }
 
-    this.getItems = async(parentID, folderFlag) => { //Returns item accessed by ids, may want to flip before returning so entries accessed by name
+    this.getItems = async(folderFlag, parentID) => { //Returns item accessed by ids, may want to flip before returning so entries accessed by name
       await checkToken(false);
-      let parID = parentID;
-      if (parID === "") parID = appFolderID;
+      if (!parentID) parentID = appFolderID;
       try {
         let list = await getMetadata(token, "");
         let items = [];
@@ -474,7 +471,7 @@ class GoogleStorage {
         for (let i in items) { //For all folders in folders
           let flag = false;
           // console.log(folders[i].name);
-          if (pars[i].parents.includes(parID)) {
+          if (pars[i].parents.includes(parentID)) {
             flag = true;
           }
           if (flag) {
