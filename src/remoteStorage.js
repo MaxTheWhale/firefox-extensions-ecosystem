@@ -595,7 +595,7 @@ class OneDriveStorage {
         body: JSON.stringify(requestBody)
       });
       if (!response.ok) {
-        if (response.status != 409) {
+        if (response.status !== 409) {
           throw response.status
         }
       }
@@ -610,7 +610,7 @@ class OneDriveStorage {
         body: JSON.stringify(requestBody)
       });
       if (!response.ok) {
-        if (response.status != 409) {
+        if (response.status !== 409) {
           throw response.status
         }
       }
@@ -646,10 +646,10 @@ class OneDriveStorage {
       }
     }
 
-    async function getID(fileName) {
+    async function getID(fileName, parentID) {
       const requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + token);
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote/${browser.runtime.id}/${fileName}`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${parentID}:/${fileName}`, {
         headers: requestHeaders
       });
       if (response.ok) {
@@ -686,16 +686,17 @@ class OneDriveStorage {
       }
     }
 
-    async function initUpload(name) {
+    async function initUpload(name, parentID) {
       const requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + token);
       requestHeaders.append('Content-Type', 'application/json');
       let requestBody = {
         "item": {
+          "name": `${name}`,
           "@microsoft.graph.conflictBehavior": "replace",
         }
       };
-      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote/${browser.runtime.id}/${name}:/createUploadSession`, {
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${parentID}:/${name}:/createUploadSession`, {
         method: "POST",
         headers: requestHeaders,
         body: JSON.stringify(requestBody)
@@ -708,10 +709,10 @@ class OneDriveStorage {
       }
     };
 
-    async function download(fileName) {
+    async function download(fileName, parentID) {
       try {
         const requestHeaders = new Headers();
-        let id = await getID(fileName);
+        let id = await getID(fileName, parentID);
         requestHeaders.append('Authorization', 'Bearer ' + token);
         let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${id}`, {
           headers: requestHeaders
@@ -739,21 +740,24 @@ class OneDriveStorage {
       await checkToken();
     }
 
-    this.uploadFile = async (file, name) => {
+    this.uploadFile = async (file, name, parentID) => {
       await checkToken();
-      let response = await initUpload(name);
+      if (!parentID) parentID = appFolderID;
+      let response = await initUpload(name, parentID);
       return await upload(file, response.uploadUrl);
     }
 
-    this.downloadFile = async (fileName) => {
+    this.downloadFile = async (fileName, parentID) => {
       await checkToken();
-      return await download(fileName);
+      if (!parentID) parentID = appFolderID;
+      return await download(fileName, parentID);
     }
 
-    this.deleteFile = async (fileName) => {
+    this.deleteFile = async (fileName, parentID) => {
       await checkToken();
+      if (!parentID) parentID = appFolderID;
       try {
-        let id = await getID(fileName);
+        let id = await getID(fileName, parentID);
         const requestHeaders = new Headers();
         requestHeaders.append('Authorization', 'Bearer ' + token);
         let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${id}`, {
@@ -771,9 +775,37 @@ class OneDriveStorage {
       }
     }
 
-    this.getItems = async (parentID, folderFlag) => {
+    this.createFolder = async(name, parentID) => {
+      await checkToken(false);
+      if (!parentID) parentID = appFolderID;
+      
+      const requestHeaders = new Headers();
+      requestHeaders.append('Authorization', 'Bearer ' + token);
+      requestHeaders.append('Content-Type', 'application/json');
+      let requestBody = {
+        "name": `${name}`,
+        "folder": { },
+        "@microsoft.graph.conflictBehavior": "fail",
+      };
+      let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${parentID}/children`, {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+      else {
+        if (response.status === 409)
+          throw "Folder already exists";
+        else
+          throw response.status;
+      }
+    }
+
+    this.getItems = async (folderFlag, parentID) => {
       await checkToken();
-      if (parentID === "") parentID = appFolderID;
+      if (!parentID) parentID = appFolderID;
 
       const requestHeaders = new Headers();
       requestHeaders.append('Authorization', 'Bearer ' + token);
@@ -798,8 +830,9 @@ class OneDriveStorage {
       return result;
     }
 
-    this.getInfo = async (fileName) => {
+    this.getInfo = async (fileName, parentID) => {
       await checkToken();
+      if (!parentID) parentID = appFolderID;
       if (fileName === undefined) {
         const requestHeaders = new Headers();
         requestHeaders.append('Authorization', 'Bearer ' + token);
@@ -822,7 +855,7 @@ class OneDriveStorage {
         }
       }
       else {
-        let info = await getMetadata(await getID(fileName));
+        let info = await getMetadata(await getID(fileName, parentID));
         info.mimeType = info.file.mimeType;
         return info;
       }
