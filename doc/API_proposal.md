@@ -51,31 +51,43 @@ previously described metadata object.
 Note that other properties will be returned, but they are not supported by all
 providers, so relying on them would prevent easy provider switching. Refer to the [Google Drive](https://developers.google.com/drive/api/v3/reference/files) and [OneDrive](https://docs.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0) metadata documentation for details.
 
+## Objects
+The API defines two helper classes for passing file and folder information.
+
+| `StoreFile` | Property description |
+|-------------|------------|
+| `StoreFile.id` | File ID |
+| `StoreFile.name` | File name |
+| `StoreFile.mimetype` | File MIME type |
+| `StoreFile.store` | Cloud storage that the file came from (either 'google' or 'onedrive') |
+
+<br>
+
+| `Folder` | Property description |
+|-------------|------------|
+| `Folder.id` | Folder ID (useful for supplying `parentID` arguments) |
+| `Folder.name` | Folder name |
+| `Folder.store` | Cloud storage that the folder came from (either 'google' or 'onedrive') |
+
 ## Methods
 The API provides classes for each cloud storage provider that are used as the
 interface. The following methods are available:
 
 | Method    | Description | Returns |
 |-----------|-------------|---------|
-| `getInfo(fileName)` | When given a file name, it will retrieve the metadata for that file. If the file doesn't exist, it will throw an error. If the argument is omitted, the metadata for all files in the cloud store will be retrieved. | Metadata object as described above
-| `uploadFile(file, fileName)` | When given a file (as a Blob/File object) and a file name, it will attempt to upload the file to the cloud storage. If the file already exists, it will be overwritten. If the upload fails, an error will be thrown with the HTTP status code. | HTTP status code
-| `downloadFile(fileName)` | When given a file name, it will attempt to download the file from the cloud storage. If successful, it will return the file. If the download fails, an error will be thrown with the HTTP status code. | Blob object containing the file
-| `deleteFile(fileName)` | When given a file name, it will attempt to delete the file from the cloud storage. If the file doesn't exist, it will throw an error. If the delete fails for any other reason, an error will be thrown with the HTTP status code. | HTTP status code
+| `getItems(folderFlag, parentID)` | This method will list all the files in a location if folderFlag is false, otherwise it will list all the folders. If the request fails, an error will be thrown with the HTTP status code.| A filename indexed list of Folder/StoreFile objects described above
+| `getInfo(fileName, parentID)` | When given a file name, it will retrieve the metadata for that file. If the file doesn't exist, it will throw an error. If the fileName is omitted, the metadata for all files in the folder will be retrieved. | Metadata object as described above
+| `uploadFile(file, fileName, parentID)` | When given a file (as a Blob/File object) and a file name, it will attempt to upload the file to the cloud storage. If the file already exists, it will be overwritten. If the upload fails, an error will be thrown with the HTTP status code. | HTTP status code
+| `downloadFile(fileName, parentID)` | When given a file name, it will attempt to download the file from the cloud storage. If successful, it will return the file. If the download fails, an error will be thrown with the HTTP status code. | Blob object containing the file
+| `deleteFile(fileName, parentID)` | When given a file name, it will attempt to delete the file from the cloud storage. If the file doesn't exist, it will throw an error. If the delete fails for any other reason, an error will be thrown with the HTTP status code. | HTTP status code
+| `createFolder(name, parentID)` | It will attempt to create a folder with the given name. If the folder already exists, it will throw an error. If the folder creation fails for any other reason, an error will be thrown with the HTTP status code. | HTTP status code
+
+Note that all the methods have an optional `parentID` parameter. This can be supplied with a folder ID (obtained using `getItems(true)`) to allow the operation to take place within a specific folder. If the argument is omitted, the operation will take place in the extension's root folder.
 
 ## Limitations
 - Google Drive requires the permissions "\*://www.googleapis.com/\*" and "\*://accounts.google.com/\*" to be given in the manifest, or else authentication will fail due to CORS errors.
-- OneDrive currently only supports uploads up to 60MB. This could be bypassed using multi-part uploads, but it seems unlikely that files this large will need to be uploaded from within an extension.
+- OneDrive currently only supports uploads up to 60MB. This could be bypassed using multi-part uploads, but this is not currently implemented.
 - OneDrive authentication currently needs to be performed every time the extension runs, as the session is not remembered due to some unknown issue.
 - OneDrive does not support the permissions to only allow the extension to access files it creates. This could create the potential risk to modify the users other files on the cloud, although the library has been designed in a way that extensions' data is kept isolated.
-
-## EXPERIMENTAL
-Folder support is being looked into, and currently there is an implementation working for Google Drive. It exposes several new methods to the user, which are briefly summarised below:
-
-| Method    | Description |
-|-----------|-------------|
-| `getFolders()` | Gets a list of all folders created by an extension, including sub-folders. Returns a list of Folder objects which contain the folder ID and name.
-| `createFolder(parentID, folderName)` | If parentID is empty, a new folder will be created at the root of the extensions' storage with the name folderName. If the parentID is given, it will be created as a sub-folder within that parent.
-| `uploadFile(file, fileName, parent)` | uploadFile works as above except that there is now a parent argument, which can be used to specify a folder to upload the new file into.
-
 
 

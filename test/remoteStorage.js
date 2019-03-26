@@ -790,7 +790,7 @@ class OneDriveStorage {
         body: JSON.stringify(requestBody)
       });
       if (response.ok) {
-        return await response.json();
+        return response.status;
       }
       else {
         if (response.status === 409)
@@ -809,6 +809,9 @@ class OneDriveStorage {
       let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${parentID}/children`, {
           headers: requestHeaders
       });
+      if (!response.ok) {
+        throw response.status;
+      }
       let items = await response.json();
       console.log(items);
       let result = {};

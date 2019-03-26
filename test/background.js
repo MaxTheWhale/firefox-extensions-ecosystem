@@ -4,6 +4,3 @@ function openMyPage() {
   });
 }
 browser.browserAction.onClicked.addListener(openMyPage);
-browser.tabs.create({
-  "url": "/test_page.html"
-});
