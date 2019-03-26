@@ -391,8 +391,8 @@ class GoogleStorage {
     this.uploadFile = async (file, name, parentID) => {
       await checkToken(false);
       if (!parentID) parentID = appFolderID;
-      let files = await this.getItems(false, parentID);
-      if (files[name] != null) throw `Provided name: ${name} already in use in this directory`
+      //let files = await this.getItems(false, parentID);
+      //if (files[name] != null) throw `Provided name: ${name} already in use in this directory`
       let id;
       let overwriting = true;
       try {
@@ -790,7 +790,7 @@ class OneDriveStorage {
         body: JSON.stringify(requestBody)
       });
       if (response.ok) {
-        return await response.json();
+        return response.status;
       }
       else {
         if (response.status === 409)
@@ -809,6 +809,9 @@ class OneDriveStorage {
       let response = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${parentID}/children`, {
           headers: requestHeaders
       });
+      if (!response.ok) {
+        throw response.status;
+      }
       let items = await response.json();
       console.log(items);
       let result = {};

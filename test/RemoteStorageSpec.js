@@ -160,6 +160,13 @@ describe("OneDrive", function() {
             await remoteStore.deleteFile("overwriteTest.txt");
             await remoteStore.deleteFile("largeUploadTest.png");
             await remoteStore.deleteFile("largeDownloadTest.png");
+            await remoteStore.deleteFile("folderCreateTest");
+            await remoteStore.deleteFile("listFileTest.txt");
+            await remoteStore.deleteFile("listFolderTest");
+            await remoteStore.deleteFile("folderUploadTest");
+            await remoteStore.deleteFile("folderDownloadTest");
+            await remoteStore.deleteFile("folderDeleteTest");
+            await remoteStore.deleteFile("subFolderListTest");
         } catch (e) {
         }
     }, largeTimeOut);
@@ -274,4 +281,101 @@ describe("OneDrive", function() {
         done();
     }, largeTimeOut);
 
+    it("Should be able to create a folder", async (done) => {
+        try {
+            await remoteStore.createFolder("folderCreateTest");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        done();
+    }, timeOut);
+
+    it("Should be able to list files", async (done) => {
+        try {
+            await remoteStore.uploadFile("This is a list file test", "listFileTest.txt");
+            result = await remoteStore.getItems(false);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(result["listFileTest.txt"].id).toBeDefined();
+        expect(result["listFileTest.txt"].name).toEqual("listFileTest.txt");
+        expect(result["listFileTest.txt"].store).toEqual("onedrive");
+        done();
+    }, timeOut);
+    
+    it("Should be able to list folders", async (done) => {
+        try {
+            await remoteStore.createFolder("listFolderTest");
+            result = await remoteStore.getItems(true);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(result["listFolderTest"]).toBeDefined();
+        expect(result["listFolderTest"].id).toBeDefined();
+        expect(result["listFolderTest"].name).toEqual("listFolderTest");
+        expect(result["listFolderTest"].store).toEqual("onedrive");
+        done();
+    }, timeOut);
+
+    it("Should be able to upload in a folder", async (done) => {
+        try {
+            await remoteStore.createFolder("folderUploadTest");
+            result = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a folder upload test", "folderUploadTest.txt", result["folderUploadTest"].id);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        done();
+    }, timeOut);
+
+    it("Should be able to download from a folder", async (done) => {
+        try {
+            await remoteStore.createFolder("folderDownloadTest");
+            folders = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a folder download test", "folderDownloadTest.txt", folders["folderDownloadTest"].id);
+            result = await remoteStore.downloadFile("folderDownloadTest.txt", folders["folderDownloadTest"].id);
+            text = await new Response(result).text();
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(text).toBeDefined();
+        expect(text).toMatch("This is a folder download test");
+        done();
+    }, timeOut);
+
+    it("Should be able to delete from a folder", async (done) => {
+        try {
+            await remoteStore.createFolder("folderDeleteTest");
+            folders = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a folder delete test", "folderDeleteTest.txt", folders["folderDeleteTest"].id);
+            await remoteStore.deleteFile("folderDeleteTest.txt", folders["folderDeleteTest"].id);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        done();
+    }, timeOut);
+
+    it("Should be able to list from a folder", async (done) => {
+        try {
+            await remoteStore.createFolder("subFolderListTest");
+            folders = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a sub folder list test", "subFolderListTest.txt", folders["subFolderListTest"].id);
+            result = await remoteStore.getItems(false, folders["subFolderListTest"].id);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(result["subFolderListTest.txt"]).toBeDefined();
+        expect(result["subFolderListTest.txt"]).toBeDefined();
+        expect(result["subFolderListTest.txt"].id).toBeDefined();
+        expect(result["subFolderListTest.txt"].name).toEqual("subFolderListTest.txt");
+        expect(result["subFolderListTest.txt"].store).toEqual("onedrive");
+        done();
+    }, timeOut);
 });

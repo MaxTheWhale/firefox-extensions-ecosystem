@@ -391,8 +391,8 @@ class GoogleStorage {
     this.uploadFile = async (file, name, parentID) => {
       await checkToken(false);
       if (!parentID) parentID = appFolderID;
-      let files = await this.getItems(false, parentID);
-      if (files[name] != null) throw `Provided name: ${name} already in use in this directory`
+      //let files = await this.getItems(false, parentID);
+      //if (files[name] != null) throw `Provided name: ${name} already in use in this directory`
       let id;
       let overwriting = true;
       try {
