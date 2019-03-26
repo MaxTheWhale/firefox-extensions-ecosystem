@@ -20,9 +20,8 @@ To obtain a client_id you will need to visit either [Google Developers Console](
 
 ## File Access
 In order to simplify the use of the API, files are saved and retrieved based
-only on their file name. This has some obvious caveats; any kind of folder
-hierarchy is unsupported, and files must have unique names. If a file with the
-same name is uploaded, it will overwrite the old file.<br>
+only on their file name, with an optional parent folder ID that can be supplied to operate within a folder. This has some caveats; Files must have unique names, and you can't use paths to work with folders. If a file with the
+same name is uploaded, it will overwrite the old file. If a folder with the same name is attempted to be created, the operation will fail.<br>
 Currently, only files created by an extension can be accessed by that extension.
 This is enforced either by permissions that the cloud provider supports, or
 otherwise by the library itself. The idea behind this is that the cloud storage
@@ -31,7 +30,7 @@ existing [`storage.local`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-
 APIs. Therefore extensions should not be able to interfere with other
 extensions' files or the users own files.
 
-All the files that an extension creates are stored in a folder named using the extensions' ID, inside a parent folder called storage.remote. This means that extensions shouldn't be able to interfere with either other files on the cloud as well as other extensions' files.
+All the files and folders that an extension creates are stored in a folder named using the extensions' ID, inside a parent folder called storage.remote. This means that extensions shouldn't be able to interfere with either other files on the cloud as well as other extensions' files.
 
 ## Metadata
 When retrieving metadata for files, it will be returned as an object with
