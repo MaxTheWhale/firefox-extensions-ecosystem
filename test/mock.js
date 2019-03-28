@@ -1,15 +1,16 @@
+/* exported browser, fetch*/
 const TEST_TOKEN = "ABCdef123456789";
-const TEST_URL = "https://remotestoretestredirect.url/"
-const AUTH_ONEDRIVE = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=1fe91dbd-fcd7-4f15-9674-1ae6d9e28ba1&response_type=token&redirect_uri=https%3A%2F%2Fremotestoretestredirect.url%2F&scope=Files.ReadWrite%20offline_access%20openid"
-const AUTH_GOOGLE = "https://accounts.google.com/o/oauth2/auth?client_id=887401722713-n61d7cl8o92cjol2sid7q31t9gs28uqs.apps.googleusercontent.com&response_type=token&redirect_uri=https%3A%2F%2Fremotestoretestredirect.url%2F&scope=openid%20email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.file"
+const TEST_URL = "https://remotestoretestredirect.url/";
+const AUTH_ONEDRIVE = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=1fe91dbd-fcd7-4f15-9674-1ae6d9e28ba1&response_type=token&redirect_uri=https%3A%2F%2Fremotestoretestredirect.url%2F&scope=Files.ReadWrite%20offline_access%20openid";
+const AUTH_GOOGLE = "https://accounts.google.com/o/oauth2/auth?client_id=887401722713-n61d7cl8o92cjol2sid7q31t9gs28uqs.apps.googleusercontent.com&response_type=token&redirect_uri=https%3A%2F%2Fremotestoretestredirect.url%2F&scope=openid%20email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.file";
 
-const VALIDATION_GOOGLE = `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${TEST_TOKEN}`
-const GETID_GOOGLE = `https://www.googleapis.com/drive/v3/files?q=name=`
-const GENERATEID_GOOGLE = `https://www.googleapis.com/drive/v3/files/generateIds?count=1`
-const UPLOAD_GOOGLE = `https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable`
-const UPLOADLOCATION_GOOGLE = `https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable&upload_id=`
-const PUT_GOOGLE = `https://www.googleapis.com/upload/drive/v3/files/`
-const FILE_GOOGLE = `https://www.googleapis.com/drive/v3/files/`
+const VALIDATION_GOOGLE = `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${TEST_TOKEN}`;
+const GETID_GOOGLE = "https://www.googleapis.com/drive/v3/files?q=name=";
+const GENERATEID_GOOGLE = "https://www.googleapis.com/drive/v3/files/generateIds?count=1";
+const UPLOAD_GOOGLE = "https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable";
+const UPLOADLOCATION_GOOGLE = "https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable&upload_id=";
+const PUT_GOOGLE = "https://www.googleapis.com/upload/drive/v3/files/";
+const FILE_GOOGLE = "https://www.googleapis.com/drive/v3/files/";
 
 let current_files = [];
 let last_search = "";
@@ -22,11 +23,11 @@ const IDs = {
     "deleteTest.txt": "b758c073e0294a99acc93c5cf5c79e05",
     "largeUploadTest.png": "e1ffd71d685d43e3bd8baa5eef0c614f",
     "largeDownloadTest.png": "9aecf6c98ed74bfca921c22968dd31c1"
-}
+};
 let files = new Map();
 
 function checkAuthHeader(headers) {
-    return (headers.get('Authorization') === `Bearer ${TEST_TOKEN}`);
+    return (headers.get("Authorization") === `Bearer ${TEST_TOKEN}`);
 }
 
 let browser = {
@@ -42,7 +43,7 @@ let browser = {
             return "none_matched";
         }
     }
-}
+};
 
 let fetch = async function(request, options) {
 
@@ -51,7 +52,7 @@ let fetch = async function(request, options) {
     let method = "GET";
     let headers = null;
     let body = null;
-    if (request.constructor.name === 'Request') {
+    if (request.constructor.name === "Request") {
         url = request.url;
         method = request.method;
         headers = request.headers;
@@ -78,7 +79,7 @@ let fetch = async function(request, options) {
             if (!checkAuthHeader(headers)) {
                 return new Response(null, { status: 413 } );
             }
-            responseBody = JSON.stringify({ ids: [IDs[last_search]] });
+            let responseBody = JSON.stringify({ ids: [IDs[last_search]] });
             return new Response(responseBody, { status: 200 } );
         }
         if (url.startsWith(GETID_GOOGLE)) {
@@ -111,10 +112,10 @@ let fetch = async function(request, options) {
     // Define responses for POST requests
     if (method === "POST") {
         if (url === UPLOAD_GOOGLE) {
-            if (!checkAuthHeader(headers) || headers.get('Content-Type') !== 'application/json') {
+            if (!checkAuthHeader(headers) || headers.get("Content-Type") !== "application/json") {
                 return new Response(null, { status: 413 } );
             }
-            metadata = await request.json();
+            let metadata = await request.json();
             let file = metadata.name;
             let id = metadata.id;
             if (current_files.includes(file) || id !== IDs[file]) {
@@ -123,7 +124,7 @@ let fetch = async function(request, options) {
             // should probably check X-Content headers here too
 
             let respHeaders = new Headers();
-            respHeaders.append('location', `${UPLOADLOCATION_GOOGLE}${IDs[file]}`);
+            respHeaders.append("location", `${UPLOADLOCATION_GOOGLE}${IDs[file]}`);
             return new Response(null, { status: 200, headers: respHeaders } );
         }
     }

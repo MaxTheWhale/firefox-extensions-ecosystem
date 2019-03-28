@@ -1,8 +1,13 @@
+/* global getGoogleStore, getOneDriveStore */
 describe("Google Drive", function() {
     var timeOut = 10000;
     var largeTimeOut = 20000;
     var remoteStore;
     var error;
+    var result;
+    var text;
+    var file;
+    var fileBlob;
 
     beforeAll(async function(done) {
         remoteStore = await getGoogleStore();
@@ -24,6 +29,7 @@ describe("Google Drive", function() {
             await remoteStore.deleteFile("largeUploadTest.png");
             await remoteStore.deleteFile("largeDownloadTest.png");
         } catch (e) {
+            error = e;
         }
         done();
     }, largeTimeOut);
@@ -96,7 +102,7 @@ describe("Google Drive", function() {
         try {
             await remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt");
             await remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt");
-            result = await remoteStore.downloadFile("overwriteTest.txt")
+            result = await remoteStore.downloadFile("overwriteTest.txt");
             text = await new Response(result).text();
         } catch(e) {
             error = e;
@@ -140,6 +146,11 @@ describe("OneDrive", function() {
     var largeTimeOut = 20000;
     var remoteStore;
     var error;
+    var result;
+    var text;
+    var file;
+    var fileBlob;
+    var folders;
 
     beforeAll(async function(done) {
         remoteStore = await getOneDriveStore();
@@ -168,6 +179,7 @@ describe("OneDrive", function() {
             await remoteStore.deleteFile("folderDeleteTest");
             await remoteStore.deleteFile("subFolderListTest");
         } catch (e) {
+            error = e;
         }
     }, largeTimeOut);
 

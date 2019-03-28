@@ -1,0 +1,18 @@
+{
+  "name": "firefox-extensions-ecosystem-master",
+  "version": "1.0.0",
+  "description": "This project implements a JavaScript library that allows developers to interface their browser extensions to cloud storage services such as Google Drive and OneDrive. The library is designed so that the interface is exactly the same no matter what cloud storage is being used, making supporting multiple cloud storage providers in an extension very simple.",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^5.15.3"
+  }
+}

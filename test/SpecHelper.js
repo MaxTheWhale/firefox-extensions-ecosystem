@@ -1,3 +1,5 @@
+/* global createRemoteStorage */
+/* exported getGoogleStore, getOneDriveStore*/
 let googleStore;
 let onedriveStore;
 
