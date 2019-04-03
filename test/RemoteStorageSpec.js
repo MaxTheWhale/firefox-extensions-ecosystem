@@ -28,6 +28,7 @@ describe("Google Drive", function() {
             await remoteStore.deleteFile("overwriteTest.txt");
             await remoteStore.deleteFile("largeUploadTest.png");
             await remoteStore.deleteFile("largeDownloadTest.png");
+            await remoteStore.deleteFile("子曰ٱلرَّحِيمِ.txt");
         } catch (e) {
             error = e;
         }
@@ -139,6 +140,20 @@ describe("Google Drive", function() {
         done();
     }, largeTimeOut);
 
+    it("Should support unicode filenames", async (done) => {
+        try {
+            await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
+            result = await remoteStore.downloadFile("子曰ٱلرَّحِيمِ.txt");
+            text = await new Response(result).text();
+        } catch(e) {
+            error = e;
+        }
+        expect(text).toBeDefined();
+        expect(text).toMatch("This is a unicode name test");
+        expect(error).not.toBeDefined();
+        done();
+    }, timeOut);
+
 });
 
 describe("OneDrive", function() {
@@ -178,6 +193,7 @@ describe("OneDrive", function() {
             await remoteStore.deleteFile("folderDownloadTest");
             await remoteStore.deleteFile("folderDeleteTest");
             await remoteStore.deleteFile("subFolderListTest");
+            await remoteStore.deleteFile("子曰ٱلرَّحِيمِ.txt");
         } catch (e) {
             error = e;
         }
@@ -388,6 +404,20 @@ describe("OneDrive", function() {
         expect(result["subFolderListTest.txt"].id).toBeDefined();
         expect(result["subFolderListTest.txt"].name).toEqual("subFolderListTest.txt");
         expect(result["subFolderListTest.txt"].store).toEqual("onedrive");
+        done();
+    }, timeOut);
+
+    it("Should support unicode filenames", async (done) => {
+        try {
+            await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
+            result = await remoteStore.downloadFile("子曰ٱلرَّحِيمِ.txt");
+            text = await new Response(result).text();
+        } catch(e) {
+            error = e;
+        }
+        expect(text).toBeDefined();
+        expect(text).toMatch("This is a unicode name test");
+        expect(error).not.toBeDefined();
         done();
     }, timeOut);
 });
