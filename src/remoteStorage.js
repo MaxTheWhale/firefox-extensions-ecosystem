@@ -890,3 +890,5 @@ async function createRemoteStorage(storageProvider, client_id) { //Need to speci
         throw "No such storage provider";
     }
 }
+
+export default createRemoteStorage

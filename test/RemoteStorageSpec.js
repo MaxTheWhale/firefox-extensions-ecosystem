@@ -1,4 +1,5 @@
-/* global getGoogleStore, getOneDriveStore */
+import {getGoogleStore, getOneDriveStore} from './SpecHelper.js'
+
 describe("Google Drive", function() {
     var timeOut = 10000;
     var largeTimeOut = 20000;
@@ -113,7 +114,7 @@ describe("Google Drive", function() {
         done();
     }, timeOut);
 
-    it("Should be able to upload a large file", async (done) => {
+    xit("Should be able to upload a large file", async (done) => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -126,7 +127,7 @@ describe("Google Drive", function() {
         done();
     }, largeTimeOut);
 
-    it("Should be able to download a large file", async (done) => {
+    xit("Should be able to download a large file", async (done) => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -180,24 +181,81 @@ describe("OneDrive", function() {
     afterAll(async function() {
         try {
             await remoteStore.deleteFile("uploadTest.txt");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("downloadTest.txt");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("infoTest1.txt");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("infoTest2.txt");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("overwriteTest.txt");
+        } catch (e) {
+            error = e;
+        }
+        try {    
             await remoteStore.deleteFile("largeUploadTest.png");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("largeDownloadTest.png");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("folderCreateTest");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("listFileTest.txt");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("listFolderTest");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("folderUploadTest");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("folderDownloadTest");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("folderDeleteTest");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("subFolderListTest");
+        } catch (e) {
+            error = e;
+        }
+        try {
             await remoteStore.deleteFile("子曰ٱلرَّحِيمِ.txt");
         } catch (e) {
             error = e;
         }
-    }, largeTimeOut);
+        
+    }, 60000);
 
     it("Should be able to complete an upload without error", async (done) => {
         try {
@@ -281,7 +339,7 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
 
-    it("Should be able to upload a large file", async (done) => {
+    xit("Should be able to upload a large file", async (done) => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -294,7 +352,7 @@ describe("OneDrive", function() {
         done();
     }, largeTimeOut);
 
-    it("Should be able to download a large file", async (done) => {
+    xit("Should be able to download a large file", async (done) => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
