@@ -1,6 +1,16 @@
 /* exported createRemoteStorage */
-const REDIRECT_URL = browser.identity.getRedirectURL();
-const REDIRECT_URL_MOZ = browser.identity.getRedirectURL().replace("extensions.allizom.org","extensions.mozilla.org");
+
+async function initBrowser() {
+    if (!("browser" in window)) {
+        global.browser = await import('../test/unit/mock.js');
+        const fetch = require('node-fetch');
+        global.fetch = fetch;
+        global.Headers = fetch.Headers;
+        global.Body = fetch.Body;
+        global.Request = fetch.Request;
+        global.Response = fetch.Response;
+    }
+}
 
 const getSize = function(content) {
     var className = content.constructor.name;
@@ -56,6 +66,7 @@ class StoreFile {
 class GoogleStorage {
     constructor(client_id) {
     // PRIVATE PROPERTIES
+        const REDIRECT_URL = browser.identity.getRedirectURL();
         let scopes = ["openid", "email", "profile", "https://www.googleapis.com/auth/drive.file"];
         let auth_url =
       `https://accounts.google.com/o/oauth2/auth?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(" "))}`;
@@ -517,6 +528,7 @@ class GoogleStorage {
 class OneDriveStorage {
     constructor(client_id) {
     // PRIVATE PROPERTIES
+        const REDIRECT_URL_MOZ = browser.identity.getRedirectURL().replace("extensions.allizom.org","extensions.mozilla.org");
         let scopes = ["Files.ReadWrite", "offline_access", "openid"];
         let auth_url =
       `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL_MOZ)}&scope=${encodeURIComponent(scopes.join(" "))}`;
@@ -865,6 +877,7 @@ class OneDriveStorage {
 }
 
 async function createRemoteStorage(storageProvider, client_id) { //Need to specify in documentation, will give directory
+    await initBrowser();
     if (storageProvider.toLowerCase() === "google") {
         let googleStorage = new GoogleStorage(client_id);
         await googleStorage.initFolder(); //New app flag may be pointless
@@ -890,3 +903,5 @@ async function createRemoteStorage(storageProvider, client_id) { //Need to speci
         throw "No such storage provider";
     }
 }
+
+export default createRemoteStorage

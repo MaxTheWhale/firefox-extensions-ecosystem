@@ -3,16 +3,25 @@
   "version": "1.0.0",
   "description": "This project implements a JavaScript library that allows developers to interface their browser extensions to cloud storage services such as Google Drive and OneDrive. The library is designed so that the interface is exactly the same no matter what cloud storage is being used, making supporting multiple cloud storage providers in an extension very simple.",
   "main": "index.js",
+  "module": "main.js",
   "directories": {
     "doc": "doc",
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node -r esm ./test/unit/test.js"
   },
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MaxTheWhale/firefox-extensions-ecosystem.git"
+  },
   "devDependencies": {
-    "eslint": "^5.15.3"
+    "eslint": "^5.15.3",
+    "esm": "^3.2.22",
+    "fetch-mock": "^7.3.1",
+    "jasmine": "^3.4.0",
+    "node-fetch": "^2.3.0"
   }
 }
