@@ -6,7 +6,6 @@ async function initBrowser() {
     } catch (error) {
         global.browser = await import('../test/unit/mock.js');
         const fetch = require('node-fetch');
-        global.fetch = fetch;
         global.Headers = fetch.Headers;
         global.Body = fetch.Body;
         global.Request = fetch.Request;

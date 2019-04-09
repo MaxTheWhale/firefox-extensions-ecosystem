@@ -26,3 +26,5 @@ Click "Create".
 
 ## Testing
 There is an extension in the test folder. It can be loaded in Firefox and will run through a series of tests for each cloud provider when the extension's icon is clicked.
+
+Run `npm test` in the root of the package to run a suite of unit tests.

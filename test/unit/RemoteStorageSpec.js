@@ -1,4 +1,5 @@
 import {getGoogleStore, getOneDriveStore} from './SpecHelper.js'
+const {fetchMock, MATCHED, UNMATCHED} = require('fetch-mock');
 
 describe("Google Drive", function() {
     var timeOut = 10000;
@@ -20,24 +21,17 @@ describe("Google Drive", function() {
         error = undefined;
     });
 
-    afterAll(async function(done) {
-        try {
-            await remoteStore.deleteFile("uploadTest.txt");
-            await remoteStore.deleteFile("downloadTest.txt");
-            await remoteStore.deleteFile("infoTest1.txt");
-            await remoteStore.deleteFile("infoTest2.txt");
-            await remoteStore.deleteFile("overwriteTest.txt");
-            await remoteStore.deleteFile("largeUploadTest.png");
-            await remoteStore.deleteFile("largeDownloadTest.png");
-            await remoteStore.deleteFile("子曰ٱلرَّحِيمِ.txt");
-        } catch (e) {
-            error = e;
-        }
-        done();
-    }, largeTimeOut);
+    afterEach(async function() {
+        fetchMock.reset();
+    });
 
     it("Should be able to complete an upload without error", async (done) => {    //Fails when error is thrown
         try {
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='uploadTest.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/generateIds?count=1", { body: { ids: ["1235"] }, status: 200});
+            fetchMock.post("https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable", { headers: { location: "https://uploadTest.txt" }, status: 200});
+            fetchMock.put("https://uploadTest.txt", 200);
+
             result = await remoteStore.uploadFile("This is an upload test", "uploadTest.txt");
         } catch (e) {
             error = e;
@@ -49,7 +43,9 @@ describe("Google Drive", function() {
     
     it("Should be able to complete a download without error", async (done) => {
         try {
-            await remoteStore.uploadFile("This is a download test", "downloadTest.txt");
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='downloadTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?alt=media", { body: "This is a download test", status: 200 });
+
             result = await remoteStore.downloadFile("downloadTest.txt");
             text = await new Response(result).text();
         } catch(e) {
@@ -62,7 +58,10 @@ describe("Google Drive", function() {
 
     it("Should be able to delete a file without error", async (done) => {
         try {
-            await remoteStore.uploadFile("This is a delete test", "deleteTest.txt");
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='deleteTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.delete("https://www.googleapis.com/drive/v3/files/1235", 201);
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/", { body: { files: [] }, status: 200 });
+
             await remoteStore.deleteFile("deleteTest.txt");
             result = await remoteStore.getInfo();
         } catch(e) {
@@ -75,7 +74,9 @@ describe("Google Drive", function() {
 
     it("Should be able to get correct file's info", async (done) => {
         try {
-            await remoteStore.uploadFile("This is getInfo test1", "infoTest1.txt");
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='infoTest1.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/1235", { body: { id: "1235", name: "infoTest1.txt", mimeType: "text/plain" }, status: 200 });
+
             result = await remoteStore.getInfo("infoTest1.txt");
         } catch(e) {
             error = e;
@@ -88,7 +89,8 @@ describe("Google Drive", function() {
 
     it ("Should be able to get all files info", async (done) => {
         try {
-            await remoteStore.uploadFile("This is getInfo test2", "infoTest2.txt");
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/", { body: { files: [{ id: "1235", name: "infoTest2.txt", mimeType: "text/plain", kind: "drive#file" }] }, status: 200 });
+
             result = await remoteStore.getInfo();
         } catch(e) {
             error = e;
@@ -102,48 +104,40 @@ describe("Google Drive", function() {
 
     it("Should be able to overwrite a file", async (done) => {
         try {
-            await remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt");
-            await remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt");
-            result = await remoteStore.downloadFile("overwriteTest.txt");
-            text = await new Response(result).text();
-        } catch(e) {
-            error = e;
-        }
-        expect(text).toMatch("This is an overwrite test");
-        expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='overwriteTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.patch("https://www.googleapis.com/upload/drive/v3/files/1235?uploadType=resumable", { headers: { location: "https://overwriteTest.txt" }, status: 200});
+            fetchMock.put("https://overwriteTest.txt", 200);
 
-    xit("Should be able to upload a large file", async (done) => {
-        try {
-            file = await fetch("large_file.png");
-            fileBlob = await file.blob();
-            result = await remoteStore.uploadFile(fileBlob, "largeUploadTest.png");
+            result = await remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt");
         } catch(e) {
             error = e;
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
         done();
-    }, largeTimeOut);
+    }, timeOut);
 
-    xit("Should be able to download a large file", async (done) => {
+    it("Should support unicode filename upload", async (done) => {
         try {
-            file = await fetch("large_file.png");
-            fileBlob = await file.blob();
-            await remoteStore.uploadFile(fileBlob, "largeDownloadTest.png");
-            result = await remoteStore.downloadFile("largeDownloadTest.png");
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='uploadTest.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/generateIds?count=1", { body: { ids: ["1235"] }, status: 200});
+            fetchMock.post("https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable", { headers: { location: "https://unicodeTest.txt" }, status: 200});
+            fetchMock.put("https://unicodeTest.txt", 200);
+
+            result = await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
         } catch(e) {
             error = e;
         }
-        expect(result.size).toEqual(fileBlob.size);
+        expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
         done();
-    }, largeTimeOut);
+    }, timeOut);
 
-    it("Should support unicode filenames", async (done) => {
+    it("Should support unicode filename download", async (done) => {
         try {
-            await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='子曰ٱلرَّحِيمِ.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?alt=media", { body: "This is a unicode name test", status: 200 });
+
             result = await remoteStore.downloadFile("子曰ٱلرَّحِيمِ.txt");
             text = await new Response(result).text();
         } catch(e) {
@@ -157,7 +151,7 @@ describe("Google Drive", function() {
 
 });
 
-describe("OneDrive", function() {
+xdescribe("OneDrive", function() {
     var timeOut = 10000;
     var largeTimeOut = 20000;
     var remoteStore;
@@ -177,85 +171,6 @@ describe("OneDrive", function() {
     beforeEach(async function() {
         error = undefined;
     });
-    
-    afterAll(async function() {
-        try {
-            await remoteStore.deleteFile("uploadTest.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("downloadTest.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("infoTest1.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("infoTest2.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("overwriteTest.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {    
-            await remoteStore.deleteFile("largeUploadTest.png");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("largeDownloadTest.png");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderCreateTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("listFileTest.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("listFolderTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderUploadTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderDownloadTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderDeleteTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("subFolderListTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("子曰ٱلرَّحِيمِ.txt");
-        } catch (e) {
-            error = e;
-        }
-        
-    }, 60000);
 
     it("Should be able to complete an upload without error", async (done) => {
         try {
@@ -270,7 +185,6 @@ describe("OneDrive", function() {
     
     it("Should be able to complete a download without error", async (done) => {
         try {
-            await remoteStore.uploadFile("This is a download test", "downloadTest.txt");
             result = await remoteStore.downloadFile("downloadTest.txt");
             text = await new Response(result).text();
         } catch(e) {
@@ -284,7 +198,6 @@ describe("OneDrive", function() {
 
     it("Should be able to delete a file without error", async (done) => {
         try {
-            await remoteStore.uploadFile("This is a delete test", "deleteTest.txt");
             await remoteStore.deleteFile("deleteTest.txt");
             result = await remoteStore.getInfo();
         } catch(e) {
@@ -298,7 +211,6 @@ describe("OneDrive", function() {
 
     it("Should be able to get correct file's info", async (done) => {
         try {
-            await remoteStore.uploadFile("This is getInfo test1", "infoTest1.txt");
             result = await remoteStore.getInfo("infoTest1.txt");
         } catch(e) {
             error = e;
@@ -311,7 +223,6 @@ describe("OneDrive", function() {
 
     it ("Should be able to get all files info", async (done) => {
         try {
-            await remoteStore.uploadFile("This is getInfo test2", "infoTest2.txt");
             result = await remoteStore.getInfo();
         } catch(e) {
             error = e;
@@ -356,7 +267,6 @@ describe("OneDrive", function() {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
-            await remoteStore.uploadFile(fileBlob, "largeDownloadTest.png");
             result = await remoteStore.downloadFile("largeDownloadTest.png");
         } catch(e) {
             error = e;
@@ -379,7 +289,6 @@ describe("OneDrive", function() {
 
     it("Should be able to list files", async (done) => {
         try {
-            await remoteStore.uploadFile("This is a list file test", "listFileTest.txt");
             result = await remoteStore.getItems(false);
         } catch(e) {
             error = e;
@@ -393,7 +302,6 @@ describe("OneDrive", function() {
     
     it("Should be able to list folders", async (done) => {
         try {
-            await remoteStore.createFolder("listFolderTest");
             result = await remoteStore.getItems(true);
         } catch(e) {
             error = e;
@@ -408,7 +316,6 @@ describe("OneDrive", function() {
 
     it("Should be able to upload in a folder", async (done) => {
         try {
-            await remoteStore.createFolder("folderUploadTest");
             result = await remoteStore.getItems(true);
             await remoteStore.uploadFile("This is a folder upload test", "folderUploadTest.txt", result["folderUploadTest"].id);
         } catch(e) {
@@ -420,7 +327,6 @@ describe("OneDrive", function() {
 
     it("Should be able to download from a folder", async (done) => {
         try {
-            await remoteStore.createFolder("folderDownloadTest");
             folders = await remoteStore.getItems(true);
             await remoteStore.uploadFile("This is a folder download test", "folderDownloadTest.txt", folders["folderDownloadTest"].id);
             result = await remoteStore.downloadFile("folderDownloadTest.txt", folders["folderDownloadTest"].id);
@@ -436,9 +342,7 @@ describe("OneDrive", function() {
 
     it("Should be able to delete from a folder", async (done) => {
         try {
-            await remoteStore.createFolder("folderDeleteTest");
             folders = await remoteStore.getItems(true);
-            await remoteStore.uploadFile("This is a folder delete test", "folderDeleteTest.txt", folders["folderDeleteTest"].id);
             await remoteStore.deleteFile("folderDeleteTest.txt", folders["folderDeleteTest"].id);
         } catch(e) {
             error = e;
@@ -449,9 +353,7 @@ describe("OneDrive", function() {
 
     it("Should be able to list from a folder", async (done) => {
         try {
-            await remoteStore.createFolder("subFolderListTest");
             folders = await remoteStore.getItems(true);
-            await remoteStore.uploadFile("This is a sub folder list test", "subFolderListTest.txt", folders["subFolderListTest"].id);
             result = await remoteStore.getItems(false, folders["subFolderListTest"].id);
         } catch(e) {
             error = e;
