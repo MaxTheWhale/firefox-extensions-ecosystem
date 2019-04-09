@@ -306,11 +306,11 @@ class GoogleStorage {
             }
         }
 
-        async function getFileID(accessToken, fileName) {
+        async function getFileID(accessToken, fileName, parentID) {
             let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`);
             let requestHeaders = new Headers();
             requestHeaders.append("Authorization", "Bearer " + accessToken);
-            requestURL += `&parents+in+'${appFolderID}'`;
+            requestURL += `&parents+in+'${parentID}'`;
             let driveRequest = new Request(requestURL, {
                 method: "GET",
                 headers: requestHeaders
@@ -374,7 +374,7 @@ class GoogleStorage {
             await checkToken(false);
             let initFlag = false;
             try {
-                apiFolderID = await getFileID(token, apiFolderName);
+                apiFolderID = await getFileID(token, apiFolderName, apiFolderID);
             } catch (error) {
                 apiFolderID = await getID(token);
                 try {
@@ -408,7 +408,7 @@ class GoogleStorage {
             let id;
             let overwriting = true;
             try {
-                id = await getFileID(token, name);
+                id = await getFileID(token, name, parentID);
             } catch (error) {
                 id = await getID(token);
                 overwriting = false;
@@ -421,10 +421,11 @@ class GoogleStorage {
             }
         };
 
-        this.downloadFile = async (fileName) => {
+        this.downloadFile = async (fileName, parentID) => {
             await checkToken(false);
+            if (!parentID) parentID = appFolderID;
             try {
-                let id = await getFileID(token, fileName);
+                let id = await getFileID(token, fileName, parentID);
                 let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
                 return await download(token, requestURL);
             } catch (error) {
@@ -432,10 +433,11 @@ class GoogleStorage {
             }
         };
 
-        this.deleteFile = async (fileName) => {
+        this.deleteFile = async (fileName, parentID) => {
             await checkToken(false);
+            if (!parentID) parentID = appFolderID;
             try {
-                let id = await getFileID(token, fileName);
+                let id = await getFileID(token, fileName, parentID);
                 let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
                 return await gdelete(token, requestURL);
             } catch (error) {
@@ -502,25 +504,33 @@ class GoogleStorage {
             }
         };
 
-        this.getInfo = async (fileName) => {
+        this.getInfo = async (fileName, parentID) => { //UNSURE
             await checkToken(false);
-            try {
-                if (fileName === undefined) {
-                    let list = await getMetadata(token, "");
-                    let result = {};
-                    list.files.forEach(file => {
-                        if (file.kind === "drive#file") {
-                            result[file.name] = file;
-                        }
-                    });
-                    return result;
-                }
-                else {
-                    return await getMetadata(token, await getFileID(token, fileName));
-                }
+            if (!parentID) parentID = appFolderID;
+            try {   //Uses get items to return same type of object with file info
+                let result = await getItems(false, parentID);
+                if (fileName === undefined) return result;
+                else return result[fileName];
             } catch (error) {
                 throw error;
             }
+            // try {    //Alternatively could re-write to return firefox file object
+            //     if (fileName === undefined) {
+            //         let list = await getMetadata(token, "");
+            //         let result = {};
+            //         list.files.forEach(file => {
+            //             if (file.kind === "drive#file") {
+            //                 result[file.name] = file;
+            //             }
+            //         });
+            //         return result;
+            //     }
+            //     else {
+            //         return await getMetadata(token, await getFileID(token, fileName));
+            //     }
+            // } catch (error) {
+            //     throw error;
+            // }
         };
     }
 }
