@@ -374,7 +374,7 @@ class GoogleStorage {
             await checkToken(false);
             let initFlag = false;
             try {
-                apiFolderID = await getFileID(token, apiFolderName, apiFolderID);
+                apiFolderID = await getFileID(token, apiFolderName, appFolderID);
             } catch (error) {
                 apiFolderID = await getID(token);
                 try {
@@ -504,7 +504,7 @@ class GoogleStorage {
             }
         };
 
-        this.getInfo = async (fileName, parentID) => { //UNSURE
+        this.getInfo = async (fileName, parentID) => {
             await checkToken(false);
             if (!parentID) parentID = appFolderID;
             try {   //Uses get items to return same type of object with file info
