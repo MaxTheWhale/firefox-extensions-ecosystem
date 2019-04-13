@@ -59,7 +59,7 @@ class StoreFile {
     constructor(fileID, fileName, mimeType, storageProvider) {
         this.id = fileID;
         this.name = fileName;
-        this.mimetype = mimeType;
+        this.mimeType = mimeType;
         this.store = storageProvider;
     }
 }
@@ -509,7 +509,7 @@ class GoogleStorage {
             await checkToken(false);
             if (!parentID) parentID = appFolderID;
             try {   //Uses get items to return same type of object with file info
-                let result = await getItems(false, parentID);
+                let result = await this.getItems(false, parentID);
                 if (fileName === undefined) return result;
                 else return result[fileName];
             } catch (error) {

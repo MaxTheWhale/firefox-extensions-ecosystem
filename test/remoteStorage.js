@@ -1,10 +1,11 @@
 /* exported createRemoteStorage */
 
 async function initBrowser() {
-    if (!("browser" in window)) {
+    try {
+        browser.getRedirectURL();
+    } catch (error) {
         global.browser = await import('../test/unit/mock.js');
         const fetch = require('node-fetch');
-        global.fetch = fetch;
         global.Headers = fetch.Headers;
         global.Body = fetch.Body;
         global.Request = fetch.Request;
@@ -58,7 +59,7 @@ class StoreFile {
     constructor(fileID, fileName, mimeType, storageProvider) {
         this.id = fileID;
         this.name = fileName;
-        this.mimetype = mimeType;
+        this.mimeType = mimeType;
         this.store = storageProvider;
     }
 }
@@ -508,29 +509,12 @@ class GoogleStorage {
             await checkToken(false);
             if (!parentID) parentID = appFolderID;
             try {   //Uses get items to return same type of object with file info
-                let result = await getItems(false, parentID);
+                let result = await this.getItems(false, parentID);
                 if (fileName === undefined) return result;
                 else return result[fileName];
             } catch (error) {
                 throw error;
             }
-            // try {    //Alternatively could re-write to return firefox file object
-            //     if (fileName === undefined) {
-            //         let list = await getMetadata(token, "");
-            //         let result = {};
-            //         list.files.forEach(file => {
-            //             if (file.kind === "drive#file") {
-            //                 result[file.name] = file;
-            //             }
-            //         });
-            //         return result;
-            //     }
-            //     else {
-            //         return await getMetadata(token, await getFileID(token, fileName));
-            //     }
-            // } catch (error) {
-            //     throw error;
-            // }
         };
     }
 }
