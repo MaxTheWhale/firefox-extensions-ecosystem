@@ -117,7 +117,7 @@ describe("Google Drive", function() {
 
     it("Should support unicode filename upload", async (done) => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='uploadTest.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='子曰ٱلرَّحِيمِ.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/generateIds?count=1", { body: { ids: ["1235"] }, status: 200});
             fetchMock.post("https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable", { headers: { location: "https://unicodeTest.txt" }, status: 200});
             fetchMock.put("https://unicodeTest.txt", 200);
@@ -277,8 +277,10 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
 
-    xit("Should be able to list files", async (done) => {
+    it("Should be able to list files", async (done) => {
         try {
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name:"listFileTest.txt", id: "1235", file: {mimeType:"text/plain"} }] }, status: 200 });
+
             result = await remoteStore.getItems(false);
         } catch(e) {
             error = e;
@@ -290,8 +292,10 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
     
-    xit("Should be able to list folders", async (done) => {
+    it("Should be able to list folders", async (done) => {
         try {
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "listFolderTest", id: "1235", folder: {} }] }, status: 200 });
+
             result = await remoteStore.getItems(true);
         } catch(e) {
             error = e;
@@ -304,8 +308,12 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
 
-    xit("Should be able to upload in a folder", async (done) => {
+    it("Should be able to upload in a folder", async (done) => {
         try {
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "folderUploadTest", id: "1235", folder: {} }] }, status: 200 });
+            fetchMock.post("https://graph.microsoft.com/v1.0/me/drive/items/1235:/folderUploadTest.txt:/createUploadSession", { body: { uploadUrl: "https://folderUploadTest.txt" }, status: 200});
+            fetchMock.put("https://folderUploadTest.txt/", 200);
+
             result = await remoteStore.getItems(true);
             await remoteStore.uploadFile("This is a folder upload test", "folderUploadTest.txt", result["folderUploadTest"].id);
         } catch(e) {
@@ -315,10 +323,14 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
 
-    xit("Should be able to download from a folder", async (done) => {
+    it("Should be able to download from a folder", async (done) => {
         try {
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "folderDownloadTest", id: "1235", folder: {} }] }, status: 200 });
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235:/folderDownloadTest.txt", { body: { id: "1236" }, status: 200});
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1236", { body: { "@microsoft.graph.downloadUrl": "https://folderDownloadTest.txt" }, status: 200});
+            fetchMock.get("https://folderDownloadTest.txt", { body: "This is a folder download test", status: 200 });
+
             folders = await remoteStore.getItems(true);
-            await remoteStore.uploadFile("This is a folder download test", "folderDownloadTest.txt", folders["folderDownloadTest"].id);
             result = await remoteStore.downloadFile("folderDownloadTest.txt", folders["folderDownloadTest"].id);
             text = await new Response(result).text();
         } catch(e) {
@@ -330,8 +342,12 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
 
-    xit("Should be able to delete from a folder", async (done) => {
+    it("Should be able to delete from a folder", async (done) => {
         try {
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "folderDeleteTest", id: "1235", folder: {} }] }, status: 200 });
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235:/folderDeleteTest.txt", { body: { id: "1236" }, status: 200});
+            fetchMock.delete("https://graph.microsoft.com/v1.0/me/drive/items/1236", 201);
+
             folders = await remoteStore.getItems(true);
             await remoteStore.deleteFile("folderDeleteTest.txt", folders["folderDeleteTest"].id);
         } catch(e) {
@@ -341,8 +357,11 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
 
-    xit("Should be able to list from a folder", async (done) => {
+    it("Should be able to list from a folder", async (done) => {
         try {
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "subFolderListTest", id: "1235", folder: {} }] }, status: 200 });
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235/children", { body: { value: [{ name: "subFolderListTest.txt", id: "1236", file: {mimeType:"text/plain"} }] }, status: 200 });
+
             folders = await remoteStore.getItems(true);
             result = await remoteStore.getItems(false, folders["subFolderListTest"].id);
         } catch(e) {
@@ -357,9 +376,26 @@ describe("OneDrive", function() {
         done();
     }, timeOut);
 
-    xit("Should support unicode filenames", async (done) => {
+    it("Should support unicode filename upload", async (done) => {
         try {
-            await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
+            fetchMock.post("https://graph.microsoft.com/v1.0/me/drive/items/1234:/子曰ٱلرَّحِيمِ.txt:/createUploadSession", { body: { uploadUrl: "https://unicodeTest.txt" }, status: 200});
+            fetchMock.put("https://unicodeTest.txt/", 200);
+
+            result = await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
+        } catch(e) {
+            error = e;
+        }
+        expect(Math.trunc(result / 100)).toEqual(2);
+        expect(error).not.toBeDefined();
+        done();
+    }, timeOut);
+
+    it("Should support unicode filename download", async (done) => {
+        try {
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234:/子曰ٱلرَّحِيمِ.txt", { body: { id: "1235" }, status: 200});
+            fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235", { body: { "@microsoft.graph.downloadUrl": "https://unicodeTest.txt" }, status: 200});
+            fetchMock.get("https://unicodeTest.txt", { body: "This is a unicode name test", status: 200 });
+
             result = await remoteStore.downloadFile("子曰ٱلرَّحِيمِ.txt");
             text = await new Response(result).text();
         } catch(e) {

@@ -820,7 +820,6 @@ class OneDriveStorage {
                 throw response.status;
             }
             let items = await response.json();
-            console.log(items);
             let result = {};
             items.value.forEach(item => {
                 if (folderFlag) {
