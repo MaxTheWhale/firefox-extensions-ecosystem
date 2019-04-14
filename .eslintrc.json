@@ -1,6 +1,7 @@
 {
     "env": {
         "browser": true,
+        "node": true,
         "webextensions": true,
         "jasmine": true,
         "es6": true
@@ -11,6 +12,7 @@
         "SharedArrayBuffer": "readonly"
     },
     "parserOptions": {
+        "sourceType": "module",
         "ecmaVersion": 2018
     },
     "rules": {
@@ -29,6 +31,9 @@
         "semi": [
             "error",
             "always"
+        ],
+        "no-var": [
+            "error"
         ]
     }
 }

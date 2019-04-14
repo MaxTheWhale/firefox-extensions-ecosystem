@@ -1,11 +1,11 @@
-import {getGoogleStore, getOneDriveStore} from './SpecHelper.js'
-const fetchMock = require('fetch-mock');
+import {getGoogleStore, getOneDriveStore} from "./SpecHelper.js";
+const fetchMock = require("fetch-mock");
 
 describe("Google Drive", () => {
-    var remoteStore;
-    var error;
-    var result;
-    var text;
+    let remoteStore;
+    let error;
+    let result;
+    let text;
 
     beforeAll(async () => {
         remoteStore = await getGoogleStore();
@@ -139,11 +139,11 @@ describe("Google Drive", () => {
 });
 
 describe("OneDrive", () => {
-    var remoteStore;
-    var error;
-    var result;
-    var text;
-    var folders;
+    let remoteStore;
+    let error;
+    let result;
+    let text;
+    let folders;
 
     beforeAll(async () => {
         remoteStore = await getOneDriveStore();

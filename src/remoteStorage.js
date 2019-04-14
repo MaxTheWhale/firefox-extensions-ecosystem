@@ -1,7 +1,7 @@
 /* exported createRemoteStorage */
 
 const getSize = function(content) {
-    var className = content.constructor.name;
+    let className = content.constructor.name;
     if (className === "Blob" || className === "File") {
         return content.size;
     }
@@ -883,4 +883,4 @@ async function createRemoteStorage(storageProvider, client_id) { //Need to speci
     }
 }
 
-export default createRemoteStorage
+export default createRemoteStorage;

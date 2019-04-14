@@ -1,7 +1,4 @@
-/* global createRemoteStorage */
-/* exported getGoogleStore, getOneDriveStore*/
-
-import createRemoteStorage from './remoteStorage.js'
+import createRemoteStorage from "./remoteStorage.js";
 let googleStore;
 let onedriveStore;
 
@@ -19,4 +16,4 @@ async function getOneDriveStore() {
     return onedriveStore;
 }
 
-export {getGoogleStore, getOneDriveStore}
+export {getGoogleStore, getOneDriveStore};

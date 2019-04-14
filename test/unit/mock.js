@@ -14,10 +14,10 @@ let identity = {
         }
         return "none_matched";
     }
-}
+};
 
 let runtime = {
     id: "{1234-extensionid}"
-}
+};
 
-export {identity, runtime}
+export {identity, runtime};

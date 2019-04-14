@@ -1,14 +1,14 @@
-import {getGoogleStore, getOneDriveStore} from './SpecHelper.js'
+import {getGoogleStore, getOneDriveStore} from "./SpecHelper.js";
 
 describe("Google Drive", () => {
-    var timeOut = 10000;
-    var largeTimeOut = 20000;
-    var remoteStore;
-    var error;
-    var result;
-    var text;
-    var file;
-    var fileBlob;
+    let timeOut = 10000;
+    let largeTimeOut = 20000;
+    let remoteStore;
+    let error;
+    let result;
+    let text;
+    let file;
+    let fileBlob;
 
     beforeAll(async () => {
         remoteStore = await getGoogleStore();
@@ -143,15 +143,15 @@ describe("Google Drive", () => {
 });
 
 describe("OneDrive", () => {
-    var timeOut = 10000;
-    var largeTimeOut = 20000;
-    var remoteStore;
-    var error;
-    var result;
-    var text;
-    var file;
-    var fileBlob;
-    var folders;
+    let timeOut = 10000;
+    let largeTimeOut = 20000;
+    let remoteStore;
+    let error;
+    let result;
+    let text;
+    let file;
+    let fileBlob;
+    let folders;
 
     beforeAll(async () => {
         remoteStore = await getOneDriveStore();
