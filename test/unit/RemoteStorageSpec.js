@@ -1,29 +1,26 @@
 import {getGoogleStore, getOneDriveStore} from './SpecHelper.js'
-const {fetchMock, MATCHED, UNMATCHED} = require('fetch-mock');
+const fetchMock = require('fetch-mock');
 
-describe("Google Drive", function() {
-    var timeOut = 10000;
-    var largeTimeOut = 20000;
+describe("Google Drive", () => {
     var remoteStore;
     var error;
     var result;
     var text;
 
-    beforeAll(async function(done) {
+    beforeAll(async () => {
         remoteStore = await getGoogleStore();
         await remoteStore.auth();
-        done();
-    }, 600000);
+    });
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         error = undefined;
     });
 
-    afterEach(async function() {
+    afterEach(async () => {
         fetchMock.reset();
     });
 
-    it("Should be able to complete an upload without error", async (done) => {    //Fails when error is thrown
+    it("Should be able to complete an upload without error", async () => {    //Fails when error is thrown
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='uploadTest.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/generateIds?count=1", { body: { ids: ["1235"] }, status: 200});
@@ -36,10 +33,9 @@ describe("Google Drive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
     
-    it("Should be able to complete a download without error", async (done) => {
+    it("Should be able to complete a download without error", async () => {
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='downloadTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?alt=media", { body: "This is a download test", status: 200 });
@@ -51,10 +47,9 @@ describe("Google Drive", function() {
         }
         expect(text).toMatch("This is a download test");
         expect(error).not.toBeDefined();
-        done();
-    }, largeTimeOut);
+    });
 
-    it("Should be able to delete a file without error", async (done) => {
+    it("Should be able to delete a file without error", async () => {
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='deleteTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
             fetchMock.delete("https://www.googleapis.com/drive/v3/files/1235", 201);
@@ -67,10 +62,9 @@ describe("Google Drive", function() {
         }
         expect(result["deleteTest.txt"]).not.toBeDefined();
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to get correct file's info", async (done) => {
+    it("Should be able to get correct file's info", async () => {
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files/", { body: { files: [{ id: "1235", name: "infoTest1.txt", mimeType: "text/plain", kind: "drive#file" }] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?fields=parents", { body: { parents: ["1234"] }, status: 200 });
@@ -82,10 +76,9 @@ describe("Google Drive", function() {
         expect(result.name).toMatch("infoTest1.txt");
         expect(result.mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it ("Should be able to get all files info", async (done) => {
+    it ("Should be able to get all files info", async () => {
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files/", { body: { files: [{ id: "1235", name: "infoTest2.txt", mimeType: "text/plain", kind: "drive#file" }] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?fields=parents", { body: { parents: ["1234"] }, status: 200 });
@@ -97,10 +90,9 @@ describe("Google Drive", function() {
         expect(result["infoTest2.txt"].name).toMatch("infoTest2.txt");
         expect(result["infoTest2.txt"].mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done(); 
-    }, timeOut);
+    });
 
-    it("Should be able to overwrite a file", async (done) => {
+    it("Should be able to overwrite a file", async () => {
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='overwriteTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
             fetchMock.patch("https://www.googleapis.com/upload/drive/v3/files/1235?uploadType=resumable", { headers: { location: "https://overwriteTest.txt" }, status: 200});
@@ -112,10 +104,9 @@ describe("Google Drive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should support unicode filename upload", async (done) => {
+    it("Should support unicode filename upload", async () => {
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='子曰ٱلرَّحِيمِ.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/generateIds?count=1", { body: { ids: ["1235"] }, status: 200});
@@ -128,10 +119,9 @@ describe("Google Drive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should support unicode filename download", async (done) => {
+    it("Should support unicode filename download", async () => {
         try {
             fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='子曰ٱلرَّحِيمِ.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?alt=media", { body: "This is a unicode name test", status: 200 });
@@ -144,35 +134,31 @@ describe("Google Drive", function() {
         expect(text).toBeDefined();
         expect(text).toMatch("This is a unicode name test");
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
 });
 
-describe("OneDrive", function() {
-    var timeOut = 10000;
-    var largeTimeOut = 20000;
+describe("OneDrive", () => {
     var remoteStore;
     var error;
     var result;
     var text;
     var folders;
 
-    beforeAll(async function(done) {
+    beforeAll(async () => {
         remoteStore = await getOneDriveStore();
         await remoteStore.auth();
-        done();
-    }, 600000);
+    });
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         error = undefined;
     });
 
-    afterEach(async function() {
+    afterEach(async () => {
         fetchMock.reset();
     });
 
-    it("Should be able to complete an upload without error", async (done) => {
+    it("Should be able to complete an upload without error", async () => {
         try {
             fetchMock.post("https://graph.microsoft.com/v1.0/me/drive/items/1234:/uploadTest.txt:/createUploadSession", { body: { uploadUrl: "https://uploadTest.txt" }, status: 200});
             fetchMock.put("https://uploadTest.txt/", 200);
@@ -183,10 +169,9 @@ describe("OneDrive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
     
-    it("Should be able to complete a download without error", async (done) => {
+    it("Should be able to complete a download without error", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234:/downloadTest.txt", { body: { id: "1235" }, status: 200});
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235", { body: { "@microsoft.graph.downloadUrl": "https://downloadTest.txt" }, status: 200});
@@ -200,10 +185,9 @@ describe("OneDrive", function() {
         expect(text).toBeDefined();
         expect(text).toMatch("This is a download test");
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to delete a file without error", async (done) => {
+    it("Should be able to delete a file without error", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234:/deleteTest.txt", { body: { id: "1235" }, status: 200});
             fetchMock.delete("https://graph.microsoft.com/v1.0/me/drive/items/1235", 201);
@@ -217,10 +201,9 @@ describe("OneDrive", function() {
         expect(result).toBeDefined();
         expect(result["deleteTest.txt"]).not.toBeDefined();
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to get correct file's info", async (done) => {
+    it("Should be able to get correct file's info", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234:/infoTest1.txt", { body: { id: "1235" }, status: 200});
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235", { body: { name:"infoTest1.txt", file: {mimeType:"text/plain"} }, status: 200 });
@@ -232,10 +215,9 @@ describe("OneDrive", function() {
         expect(result.name).toMatch("infoTest1.txt");
         expect(result.mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it ("Should be able to get all files info", async (done) => {
+    it ("Should be able to get all files info", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/root:/storage.remote/%7B1234-extensionid%7D:/children", { body: { value: [{ name:"infoTest2.txt", file: {mimeType:"text/plain"} }] }, status: 200 });
 
@@ -248,10 +230,9 @@ describe("OneDrive", function() {
         expect(result["infoTest2.txt"].name).toMatch("infoTest2.txt");
         expect(result["infoTest2.txt"].mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to overwrite a file", async (done) => {
+    it("Should be able to overwrite a file", async () => {
         try {
             fetchMock.post("https://graph.microsoft.com/v1.0/me/drive/items/1234:/overwriteTest.txt:/createUploadSession", { body: { uploadUrl: "https://overwriteTest.txt" }, status: 200});
             fetchMock.put("https://overwriteTest.txt/", 200);
@@ -262,10 +243,9 @@ describe("OneDrive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to create a folder", async (done) => {
+    it("Should be able to create a folder", async () => {
         try {
             fetchMock.post("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", 201);
 
@@ -274,10 +254,9 @@ describe("OneDrive", function() {
             error = e;
         }
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to list files", async (done) => {
+    it("Should be able to list files", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name:"listFileTest.txt", id: "1235", file: {mimeType:"text/plain"} }] }, status: 200 });
 
@@ -289,10 +268,9 @@ describe("OneDrive", function() {
         expect(result["listFileTest.txt"].id).toBeDefined();
         expect(result["listFileTest.txt"].name).toEqual("listFileTest.txt");
         expect(result["listFileTest.txt"].store).toEqual("onedrive");
-        done();
-    }, timeOut);
+    });
     
-    it("Should be able to list folders", async (done) => {
+    it("Should be able to list folders", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "listFolderTest", id: "1235", folder: {} }] }, status: 200 });
 
@@ -305,10 +283,9 @@ describe("OneDrive", function() {
         expect(result["listFolderTest"].id).toBeDefined();
         expect(result["listFolderTest"].name).toEqual("listFolderTest");
         expect(result["listFolderTest"].store).toEqual("onedrive");
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to upload in a folder", async (done) => {
+    it("Should be able to upload in a folder", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "folderUploadTest", id: "1235", folder: {} }] }, status: 200 });
             fetchMock.post("https://graph.microsoft.com/v1.0/me/drive/items/1235:/folderUploadTest.txt:/createUploadSession", { body: { uploadUrl: "https://folderUploadTest.txt" }, status: 200});
@@ -320,10 +297,9 @@ describe("OneDrive", function() {
             error = e;
         }
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to download from a folder", async (done) => {
+    it("Should be able to download from a folder", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "folderDownloadTest", id: "1235", folder: {} }] }, status: 200 });
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235:/folderDownloadTest.txt", { body: { id: "1236" }, status: 200});
@@ -338,11 +314,10 @@ describe("OneDrive", function() {
         }
         expect(error).not.toBeDefined();
         expect(text).toBeDefined();
-        expect(text).toMatch("This is a folder download test");
-        done();
-    }, timeOut);
+        expect(text).toMatch("This is a folder download test"); 
+    });
 
-    it("Should be able to delete from a folder", async (done) => {
+    it("Should be able to delete from a folder", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "folderDeleteTest", id: "1235", folder: {} }] }, status: 200 });
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235:/folderDeleteTest.txt", { body: { id: "1236" }, status: 200});
@@ -354,10 +329,9 @@ describe("OneDrive", function() {
             error = e;
         }
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+    });
 
-    it("Should be able to list from a folder", async (done) => {
+    it("Should be able to list from a folder", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234/children", { body: { value: [{ name: "subFolderListTest", id: "1235", folder: {} }] }, status: 200 });
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235/children", { body: { value: [{ name: "subFolderListTest.txt", id: "1236", file: {mimeType:"text/plain"} }] }, status: 200 });
@@ -372,11 +346,10 @@ describe("OneDrive", function() {
         expect(result["subFolderListTest.txt"]).toBeDefined();
         expect(result["subFolderListTest.txt"].id).toBeDefined();
         expect(result["subFolderListTest.txt"].name).toEqual("subFolderListTest.txt");
-        expect(result["subFolderListTest.txt"].store).toEqual("onedrive");
-        done();
-    }, timeOut);
+        expect(result["subFolderListTest.txt"].store).toEqual("onedrive");     
+    });
 
-    it("Should support unicode filename upload", async (done) => {
+    it("Should support unicode filename upload", async () => {
         try {
             fetchMock.post("https://graph.microsoft.com/v1.0/me/drive/items/1234:/子曰ٱلرَّحِيمِ.txt:/createUploadSession", { body: { uploadUrl: "https://unicodeTest.txt" }, status: 200});
             fetchMock.put("https://unicodeTest.txt/", 200);
@@ -386,11 +359,10 @@ describe("OneDrive", function() {
             error = e;
         }
         expect(Math.trunc(result / 100)).toEqual(2);
-        expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+        expect(error).not.toBeDefined();  
+    });
 
-    it("Should support unicode filename download", async (done) => {
+    it("Should support unicode filename download", async () => {
         try {
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1234:/子曰ٱلرَّحِيمِ.txt", { body: { id: "1235" }, status: 200});
             fetchMock.get("https://graph.microsoft.com/v1.0/me/drive/items/1235", { body: { "@microsoft.graph.downloadUrl": "https://unicodeTest.txt" }, status: 200});
@@ -403,7 +375,6 @@ describe("OneDrive", function() {
         }
         expect(text).toBeDefined();
         expect(text).toMatch("This is a unicode name test");
-        expect(error).not.toBeDefined();
-        done();
-    }, timeOut);
+        expect(error).not.toBeDefined();     
+    });
 });
