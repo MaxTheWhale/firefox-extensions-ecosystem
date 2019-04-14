@@ -1,18 +1,5 @@
 /* exported createRemoteStorage */
 
-async function initBrowser() {
-    try {
-        browser.getRedirectURL();
-    } catch (error) {
-        global.browser = await import('../test/unit/mock.js');
-        const fetch = require('node-fetch');
-        global.Headers = fetch.Headers;
-        global.Body = fetch.Body;
-        global.Request = fetch.Request;
-        global.Response = fetch.Response;
-    }
-}
-
 const getSize = function(content) {
     var className = content.constructor.name;
     if (className === "Blob" || className === "File") {
@@ -820,7 +807,6 @@ class OneDriveStorage {
                 throw response.status;
             }
             let items = await response.json();
-            console.log(items);
             let result = {};
             items.value.forEach(item => {
                 if (folderFlag) {
@@ -871,7 +857,6 @@ class OneDriveStorage {
 }
 
 async function createRemoteStorage(storageProvider, client_id) { //Need to specify in documentation, will give directory
-    await initBrowser();
     if (storageProvider.toLowerCase() === "google") {
         let googleStorage = new GoogleStorage(client_id);
         await googleStorage.initFolder(); //New app flag may be pointless
