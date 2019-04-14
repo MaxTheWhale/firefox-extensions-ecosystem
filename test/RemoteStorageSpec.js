@@ -1,6 +1,6 @@
 import {getGoogleStore, getOneDriveStore} from './SpecHelper.js'
 
-describe("Google Drive", function() {
+describe("Google Drive", () => {
     var timeOut = 10000;
     var largeTimeOut = 20000;
     var remoteStore;
@@ -10,33 +10,27 @@ describe("Google Drive", function() {
     var file;
     var fileBlob;
 
-    beforeAll(async function(done) {
+    beforeAll(async () => {
         remoteStore = await getGoogleStore();
         await remoteStore.auth();
-        done();
     }, 600000);
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         error = undefined;
     });
 
-    afterAll(async function(done) {
-        try {
-            await remoteStore.deleteFile("uploadTest.txt");
-            await remoteStore.deleteFile("downloadTest.txt");
-            await remoteStore.deleteFile("infoTest1.txt");
-            await remoteStore.deleteFile("infoTest2.txt");
-            await remoteStore.deleteFile("overwriteTest.txt");
-            await remoteStore.deleteFile("largeUploadTest.png");
-            await remoteStore.deleteFile("largeDownloadTest.png");
-            await remoteStore.deleteFile("子曰ٱلرَّحِيمِ.txt");
-        } catch (e) {
-            error = e;
+    afterAll(async () => {
+        const fileList = ["uploadTest.txt", "downloadTest.txt", "infoTest1.txt", "infoTest2.txt", "overwriteTest.txt", "largeUploadTest.png", "largeDownloadTest.png", "子曰ٱلرَّحِيمِ.txt"];
+        for (let i in fileList) {
+            try {
+                await remoteStore.deleteFile(fileList[i]);
+            } catch (e) {
+                error = e;
+            }
         }
-        done();
     }, largeTimeOut);
 
-    it("Should be able to complete an upload without error", async (done) => {    //Fails when error is thrown
+    it("Should be able to complete an upload without error", async () => {
         try {
             result = await remoteStore.uploadFile("This is an upload test", "uploadTest.txt");
         } catch (e) {
@@ -44,10 +38,9 @@ describe("Google Drive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
     
-    it("Should be able to complete a download without error", async (done) => {
+    it("Should be able to complete a download without error", async () => {
         try {
             await remoteStore.uploadFile("This is a download test", "downloadTest.txt");
             result = await remoteStore.downloadFile("downloadTest.txt");
@@ -57,10 +50,9 @@ describe("Google Drive", function() {
         }
         expect(text).toMatch("This is a download test");
         expect(error).not.toBeDefined();
-        done();
     }, largeTimeOut);
 
-    it("Should be able to delete a file without error", async (done) => {
+    it("Should be able to delete a file without error", async () => {
         try {
             await remoteStore.uploadFile("This is a delete test", "deleteTest.txt");
             await remoteStore.deleteFile("deleteTest.txt");
@@ -70,10 +62,9 @@ describe("Google Drive", function() {
         }
         expect(result["deleteTest.txt"]).not.toBeDefined();
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it("Should be able to get correct file's info", async (done) => {
+    it("Should be able to get correct file's info", async () => {
         try {
             await remoteStore.uploadFile("This is getInfo test1", "infoTest1.txt");
             result = await remoteStore.getInfo("infoTest1.txt");
@@ -83,10 +74,9 @@ describe("Google Drive", function() {
         expect(result.name).toMatch("infoTest1.txt");
         expect(result.mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it ("Should be able to get all files info", async (done) => {
+    it ("Should be able to get all files info", async () => {
         try {
             await remoteStore.uploadFile("This is getInfo test2", "infoTest2.txt");
             result = await remoteStore.getInfo();
@@ -97,10 +87,9 @@ describe("Google Drive", function() {
         expect(result["infoTest2.txt"].name).toMatch("infoTest2.txt");
         expect(result["infoTest2.txt"].mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done(); 
     }, timeOut);
 
-    it("Should be able to overwrite a file", async (done) => {
+    it("Should be able to overwrite a file", async () => {
         try {
             await remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt");
             await remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt");
@@ -111,10 +100,9 @@ describe("Google Drive", function() {
         }
         expect(text).toMatch("This is an overwrite test");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    xit("Should be able to upload a large file", async (done) => {
+    xit("Should be able to upload a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -124,10 +112,9 @@ describe("Google Drive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
     }, largeTimeOut);
 
-    xit("Should be able to download a large file", async (done) => {
+    xit("Should be able to download a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -138,10 +125,9 @@ describe("Google Drive", function() {
         }
         expect(result.size).toEqual(fileBlob.size);
         expect(error).not.toBeDefined();
-        done();
     }, largeTimeOut);
 
-    it("Should support unicode filenames", async (done) => {
+    it("Should support unicode filenames", async () => {
         try {
             await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
             result = await remoteStore.downloadFile("子曰ٱلرَّحِيمِ.txt");
@@ -152,12 +138,11 @@ describe("Google Drive", function() {
         expect(text).toBeDefined();
         expect(text).toMatch("This is a unicode name test");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
 });
 
-describe("OneDrive", function() {
+describe("OneDrive", () => {
     var timeOut = 10000;
     var largeTimeOut = 20000;
     var remoteStore;
@@ -168,96 +153,27 @@ describe("OneDrive", function() {
     var fileBlob;
     var folders;
 
-    beforeAll(async function(done) {
+    beforeAll(async () => {
         remoteStore = await getOneDriveStore();
         await remoteStore.auth();
-        done();
     }, 600000);
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         error = undefined;
     });
     
-    afterAll(async function() {
-        try {
-            await remoteStore.deleteFile("uploadTest.txt");
-        } catch (e) {
-            error = e;
+    afterAll(async () => {
+        const fileList = ["uploadTest.txt", "downloadTest.txt", "infoTest1.txt", "infoTest2.txt", "overwriteTest.txt", "largeUploadTest.png", "largeDownloadTest.png", "子曰ٱلرَّحِيمِ.txt", "folderCreateTest", "listFileTest.txt", "listFolderTest", "folderUploadTest", "folderDownloadTest", "folderDeleteTest", "subFolderListTest"];
+        for (let i in fileList) {
+            try {
+                await remoteStore.deleteFile(fileList[i]);
+            } catch (e) {
+                error = e;
+            }
         }
-        try {
-            await remoteStore.deleteFile("downloadTest.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("infoTest1.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("infoTest2.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("overwriteTest.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {    
-            await remoteStore.deleteFile("largeUploadTest.png");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("largeDownloadTest.png");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderCreateTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("listFileTest.txt");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("listFolderTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderUploadTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderDownloadTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("folderDeleteTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("subFolderListTest");
-        } catch (e) {
-            error = e;
-        }
-        try {
-            await remoteStore.deleteFile("子曰ٱلرَّحِيمِ.txt");
-        } catch (e) {
-            error = e;
-        }
-        
     }, 60000);
 
-    it("Should be able to complete an upload without error", async (done) => {
+    it("Should be able to complete an upload without error", async () => {
         try {
             result = await remoteStore.uploadFile("This is and upload test.", "uploadTest.txt");
         } catch(e) {
@@ -265,10 +181,9 @@ describe("OneDrive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
-    }, timeOut); //Setting custom timeout to deal with handling stuff over internet
+    }, timeOut);
     
-    it("Should be able to complete a download without error", async (done) => {
+    it("Should be able to complete a download without error", async () => {
         try {
             await remoteStore.uploadFile("This is a download test", "downloadTest.txt");
             result = await remoteStore.downloadFile("downloadTest.txt");
@@ -279,10 +194,9 @@ describe("OneDrive", function() {
         expect(text).toBeDefined();
         expect(text).toMatch("This is a download test");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it("Should be able to delete a file without error", async (done) => {
+    it("Should be able to delete a file without error", async () => {
         try {
             await remoteStore.uploadFile("This is a delete test", "deleteTest.txt");
             await remoteStore.deleteFile("deleteTest.txt");
@@ -293,10 +207,9 @@ describe("OneDrive", function() {
         expect(result).toBeDefined();
         expect(result["deleteTest.txt"]).not.toBeDefined();
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it("Should be able to get correct file's info", async (done) => {
+    it("Should be able to get correct file's info", async () => {
         try {
             await remoteStore.uploadFile("This is getInfo test1", "infoTest1.txt");
             result = await remoteStore.getInfo("infoTest1.txt");
@@ -306,10 +219,9 @@ describe("OneDrive", function() {
         expect(result.name).toMatch("infoTest1.txt");
         expect(result.mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it ("Should be able to get all files info", async (done) => {
+    it ("Should be able to get all files info", async () => {
         try {
             await remoteStore.uploadFile("This is getInfo test2", "infoTest2.txt");
             result = await remoteStore.getInfo();
@@ -321,10 +233,9 @@ describe("OneDrive", function() {
         expect(result["infoTest2.txt"].name).toMatch("infoTest2.txt");
         expect(result["infoTest2.txt"].mimeType).toMatch("text/plain");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it("Should be able to overwrite a file", async (done) => {
+    it("Should be able to overwrite a file", async () => {
         try {
             await remoteStore.uploadFile("This text should get overwritten", "overwriteTest.txt");
             await remoteStore.uploadFile("This is an overwrite test", "overwriteTest.txt");
@@ -336,10 +247,9 @@ describe("OneDrive", function() {
         }
         expect(text).toMatch("This is an overwrite test");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    xit("Should be able to upload a large file", async (done) => {
+    xit("Should be able to upload a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -349,10 +259,9 @@ describe("OneDrive", function() {
         }
         expect(Math.trunc(result / 100)).toEqual(2);
         expect(error).not.toBeDefined();
-        done();
     }, largeTimeOut);
 
-    xit("Should be able to download a large file", async (done) => {
+    xit("Should be able to download a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -364,20 +273,18 @@ describe("OneDrive", function() {
         expect(result).toBeDefined();
         expect(result.size).toEqual(fileBlob.size);
         expect(error).not.toBeDefined();
-        done();
     }, largeTimeOut);
 
-    it("Should be able to create a folder", async (done) => {
+    it("Should be able to create a folder", async () => {
         try {
             await remoteStore.createFolder("folderCreateTest");
         } catch(e) {
             error = e;
         }
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it("Should be able to list files", async (done) => {
+    it("Should be able to list files", async () => {
         try {
             await remoteStore.uploadFile("This is a list file test", "listFileTest.txt");
             result = await remoteStore.getItems(false);
@@ -388,10 +295,9 @@ describe("OneDrive", function() {
         expect(result["listFileTest.txt"].id).toBeDefined();
         expect(result["listFileTest.txt"].name).toEqual("listFileTest.txt");
         expect(result["listFileTest.txt"].store).toEqual("onedrive");
-        done();
     }, timeOut);
     
-    it("Should be able to list folders", async (done) => {
+    it("Should be able to list folders", async () => {
         try {
             await remoteStore.createFolder("listFolderTest");
             result = await remoteStore.getItems(true);
@@ -403,10 +309,9 @@ describe("OneDrive", function() {
         expect(result["listFolderTest"].id).toBeDefined();
         expect(result["listFolderTest"].name).toEqual("listFolderTest");
         expect(result["listFolderTest"].store).toEqual("onedrive");
-        done();
     }, timeOut);
 
-    it("Should be able to upload in a folder", async (done) => {
+    it("Should be able to upload in a folder", async () => {
         try {
             await remoteStore.createFolder("folderUploadTest");
             result = await remoteStore.getItems(true);
@@ -415,10 +320,9 @@ describe("OneDrive", function() {
             error = e;
         }
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it("Should be able to download from a folder", async (done) => {
+    it("Should be able to download from a folder", async () => {
         try {
             await remoteStore.createFolder("folderDownloadTest");
             folders = await remoteStore.getItems(true);
@@ -431,10 +335,9 @@ describe("OneDrive", function() {
         expect(error).not.toBeDefined();
         expect(text).toBeDefined();
         expect(text).toMatch("This is a folder download test");
-        done();
     }, timeOut);
 
-    it("Should be able to delete from a folder", async (done) => {
+    it("Should be able to delete from a folder", async () => {
         try {
             await remoteStore.createFolder("folderDeleteTest");
             folders = await remoteStore.getItems(true);
@@ -444,10 +347,9 @@ describe("OneDrive", function() {
             error = e;
         }
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 
-    it("Should be able to list from a folder", async (done) => {
+    it("Should be able to list from a folder", async () => {
         try {
             await remoteStore.createFolder("subFolderListTest");
             folders = await remoteStore.getItems(true);
@@ -462,10 +364,9 @@ describe("OneDrive", function() {
         expect(result["subFolderListTest.txt"].id).toBeDefined();
         expect(result["subFolderListTest.txt"].name).toEqual("subFolderListTest.txt");
         expect(result["subFolderListTest.txt"].store).toEqual("onedrive");
-        done();
     }, timeOut);
 
-    it("Should support unicode filenames", async (done) => {
+    it("Should support unicode filenames", async () => {
         try {
             await remoteStore.uploadFile("This is a unicode name test", "子曰ٱلرَّحِيمِ.txt");
             result = await remoteStore.downloadFile("子曰ٱلرَّحِيمِ.txt");
@@ -476,6 +377,5 @@ describe("OneDrive", function() {
         expect(text).toBeDefined();
         expect(text).toMatch("This is a unicode name test");
         expect(error).not.toBeDefined();
-        done();
     }, timeOut);
 });
