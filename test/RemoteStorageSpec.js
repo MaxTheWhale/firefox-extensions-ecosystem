@@ -1,7 +1,7 @@
 import {getGoogleStore, getOneDriveStore} from "./SpecHelper.js";
 
 describe("Google Drive", () => {
-    let timeOut = 10000;
+    let timeOut = 30000;
     let largeTimeOut = 20000;
     let remoteStore;
     let error;
@@ -9,6 +9,7 @@ describe("Google Drive", () => {
     let text;
     let file;
     let fileBlob;
+    let folders;
 
     beforeAll(async () => {
         remoteStore = await getGoogleStore();
@@ -20,7 +21,7 @@ describe("Google Drive", () => {
     });
 
     afterAll(async () => {
-        const fileList = ["uploadTest.txt", "downloadTest.txt", "infoTest1.txt", "infoTest2.txt", "overwriteTest.txt", "largeUploadTest.png", "largeDownloadTest.png", "子曰ٱلرَّحِيمِ.txt"];
+        const fileList = ["uploadTest.txt", "downloadTest.txt", "infoTest1.txt", "infoTest2.txt", "overwriteTest.txt", "largeUploadTest.png", "largeDownloadTest.png", "子曰ٱلرَّحِيمِ.txt", "folderCreateTest", "listFileTest.txt", "listFolderTest", "folderUploadTest", "folderDownloadTest", "folderDeleteTest", "subFolderListTest"];
         for (let i in fileList) {
             try {
                 await remoteStore.deleteFile(fileList[i]);
@@ -126,6 +127,97 @@ describe("Google Drive", () => {
         expect(result.size).toEqual(fileBlob.size);
         expect(error).not.toBeDefined();
     }, largeTimeOut);
+
+    it("Should be able to create a folder", async () => {
+        try {
+            await remoteStore.createFolder("folderCreateTest");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+    }, timeOut);
+
+    it("Should be able to list files", async () => {
+        try {
+            await remoteStore.uploadFile("This is a list file test", "listFileTest.txt");
+            result = await remoteStore.getItems(false);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(result["listFileTest.txt"].id).toBeDefined();
+        expect(result["listFileTest.txt"].name).toEqual("listFileTest.txt");
+        expect(result["listFileTest.txt"].store).toEqual("google");
+    }, timeOut);
+    
+    it("Should be able to list folders", async () => {
+        try {
+            await remoteStore.createFolder("listFolderTest");
+            result = await remoteStore.getItems(true);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(result["listFolderTest"]).toBeDefined();
+        expect(result["listFolderTest"].id).toBeDefined();
+        expect(result["listFolderTest"].name).toEqual("listFolderTest");
+        expect(result["listFolderTest"].store).toEqual("google");
+    }, timeOut);
+
+    it("Should be able to upload in a folder", async () => {
+        try {
+            await remoteStore.createFolder("folderUploadTest");
+            result = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a folder upload test", "folderUploadTest.txt", result["folderUploadTest"].id);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+    }, timeOut);
+
+    it("Should be able to download from a folder", async () => {
+        try {
+            await remoteStore.createFolder("folderDownloadTest");
+            folders = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a folder download test", "folderDownloadTest.txt", folders["folderDownloadTest"].id);
+            result = await remoteStore.downloadFile("folderDownloadTest.txt", folders["folderDownloadTest"].id);
+            text = await new Response(result).text();
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(text).toBeDefined();
+        expect(text).toMatch("This is a folder download test");
+    }, timeOut);
+
+    it("Should be able to delete from a folder", async () => {
+        try {
+            await remoteStore.createFolder("folderDeleteTest");
+            folders = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a folder delete test", "folderDeleteTest.txt", folders["folderDeleteTest"].id);
+            await remoteStore.deleteFile("folderDeleteTest.txt", folders["folderDeleteTest"].id);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+    }, timeOut);
+
+    it("Should be able to list from a folder", async () => {
+        try {
+            await remoteStore.createFolder("subFolderListTest");
+            folders = await remoteStore.getItems(true);
+            await remoteStore.uploadFile("This is a sub folder list test", "subFolderListTest.txt", folders["subFolderListTest"].id);
+            result = await remoteStore.getItems(false, folders["subFolderListTest"].id);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).not.toBeDefined();
+        expect(result["subFolderListTest.txt"]).toBeDefined();
+        expect(result["subFolderListTest.txt"]).toBeDefined();
+        expect(result["subFolderListTest.txt"].id).toBeDefined();
+        expect(result["subFolderListTest.txt"].name).toEqual("subFolderListTest.txt");
+        expect(result["subFolderListTest.txt"].store).toEqual("google");
+    }, timeOut);
 
     it("Should support unicode filenames", async () => {
         try {

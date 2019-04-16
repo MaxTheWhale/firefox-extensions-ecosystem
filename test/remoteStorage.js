@@ -467,7 +467,7 @@ class GoogleStorage {
                     }
                 });
                 // result[appFolderID] = new Folder(folders[appFolderID].id, folders[appFolderID].name); //Ensures all folders added are children of isolated folder
-                for (let i in items) {
+                for (let i in items) { //Potential for better performance by modifying the getMetadata call to get all fields and parents at once, would remove second call to drive
                     pars[i] = await getParents(token, i);
                 }
                 for (let i in items) { //For all folders in folders
