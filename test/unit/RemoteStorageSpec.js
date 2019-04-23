@@ -384,8 +384,6 @@ describe("Mock Provider", () => {
     let error;
     let result;
     let text;
-    let file;
-    let fileBlob;
     let folders;
 
     beforeAll(async () => {

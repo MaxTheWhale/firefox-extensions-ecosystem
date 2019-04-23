@@ -857,7 +857,7 @@ class OneDriveStorage {
 }
 
 class MockStorage {
-    constructor(client_id) {
+    constructor() {
         // PRIVATE PROPERTIES
         let folderIDs = new Map();
         let folderContents = new Map();
@@ -866,7 +866,7 @@ class MockStorage {
         folderContents.set("", root);
         // PRIVATE METHODS
         function newID() {
-            return '_' + Math.random().toString(36).substr(2, 9);
+            return "_" + Math.random().toString(36).substr(2, 9);
         }
 
         // PUBLIC METHODS
