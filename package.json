@@ -9,7 +9,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "node -r esm ./test/unit/test.js"
+    "test": "node ./test/unit/test.js"
   },
   "author": "",
   "license": "ISC",

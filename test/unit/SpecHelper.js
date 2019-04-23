@@ -4,6 +4,7 @@ const fetchMock = require("fetch-mock");
 const nodeFetch = require("node-fetch");
 let googleStore;
 let onedriveStore;
+let mockStore;
 
 async function getGoogleStore() {
     if (googleStore === undefined) {
@@ -46,4 +47,12 @@ async function getOneDriveStore() {
     return onedriveStore;
 }
 
-export {getGoogleStore, getOneDriveStore};
+async function getMockStore() {
+    if (mockStore === undefined) {
+        mockStore = await createRemoteStorage("Mock", "myclientid");
+        await mockStore.auth();
+    }
+    return mockStore;
+}
+
+export {getGoogleStore, getOneDriveStore, getMockStore};
