@@ -49,6 +49,12 @@ async function getOneDriveStore() {
 
 async function getMockStore() {
     if (mockStore === undefined) {
+        global.browser = browser;
+        global.Headers = nodeFetch.Headers;
+        global.Body = nodeFetch.Body;
+        global.Request = nodeFetch.Request;
+        global.Response = nodeFetch.Response;
+
         mockStore = await createRemoteStorage("Mock", "myclientid");
         await mockStore.auth();
     }
