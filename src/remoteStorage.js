@@ -467,7 +467,7 @@ class GoogleStorage {
                     }
                 });
                 // result[appFolderID] = new Folder(folders[appFolderID].id, folders[appFolderID].name); //Ensures all folders added are children of isolated folder
-                for (let i in items) {
+                for (let i in items) { //Potential for better performance by modifying the getMetadata call to get all fields and parents at once, would remove second call to drive
                     pars[i] = await getParents(token, i);
                 }
                 for (let i in items) { //For all folders in folders
@@ -856,6 +856,116 @@ class OneDriveStorage {
     }
 }
 
+class MockStorage {
+    constructor(client_id) {
+        // PRIVATE PROPERTIES
+        let folderIDs = new Map();
+        let folderContents = new Map();
+        folderIDs.set("", "");
+        let root = new Map();
+        folderContents.set("", root);
+        // PRIVATE METHODS
+        function newID() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // PUBLIC METHODS
+        this.auth = async () => {
+        };
+
+        this.uploadFile = async (file, name, parentID) => {
+            if (!parentID) parentID = "";
+            if (folderContents.has(parentID)) {
+                let folder = folderContents.get(parentID);
+                folder.set(name, file);
+                folderContents.set(parentID, folder);
+
+            }
+            else throw "No such folder";
+            return 200;
+        };
+
+        this.downloadFile = async (fileName, parentID) => {
+            if (!parentID) parentID = "";
+            if (folderContents.has(parentID)) {
+                let folder = folderContents.get(parentID);
+                if (folder.has(fileName)) {
+                    return folder.get(fileName);
+                }
+                else throw "No such file";
+            }
+            else throw "No such folder";
+        };
+
+        this.deleteFile = async (fileName, parentID) => {
+            if (!parentID) parentID = "";
+            if (folderContents.has(parentID)) {
+                let folder = folderContents.get(parentID);
+                if (folder.has(fileName)) {
+                    folder.delete(fileName);
+                }
+                else throw "No such file";
+            }
+            else throw "No such folder";
+            return 200;
+        };
+
+        this.createFolder = async(name, parentID) => {
+            let fullName;
+            if (!parentID) parentID = "";
+            if (folderContents.has(parentID)) {
+                fullName = `${parentID}/${name}`;
+                if (!folderIDs.has(fullName)) {
+                    let id = newID();
+                    folderIDs.set(fullName, id);
+                    let contents = new Map();
+                    folderContents.set(id, contents);
+                    let parentFolder = folderContents.get(parentID);
+                    let folder = new Folder(id, name, "mock");
+                    parentFolder.set(name, folder);
+                    folderContents.set(parentID, parentFolder);
+                }
+                else throw "Folder already exists";
+            }
+            else throw "No such folder";
+            return 200;
+        };
+
+        this.getItems = async (folderFlag, parentID) => {
+            if (!parentID) parentID = "";
+            if (folderContents.has(parentID)) {
+                let result = {};
+                for (let [key, value] of folderContents.get(parentID).entries()) {
+                    if (value.constructor.name == "Folder") {
+                        if (folderFlag) {
+                            result[value.name] = value;
+                        }
+                    }
+                    else {
+                        if (!folderFlag) {
+                            let file = new StoreFile("", key, getMIME(value), "mock");
+                            result[file.name] = file;
+                        }
+                    }
+                }
+                return result;
+            }
+            else throw "No such folder";
+        };
+
+        this.getInfo = async (fileName, parentID) => {
+            let items = await this.getItems(false, parentID);
+            if (fileName) {
+                if (items[fileName]) {
+                    return items[fileName];
+                }
+                else throw "No such file";
+            }
+            return items;
+        };
+    }
+}
+
 async function createRemoteStorage(storageProvider, client_id) { //Need to specify in documentation, will give directory
     if (storageProvider.toLowerCase() === "google") {
         let googleStorage = new GoogleStorage(client_id);
@@ -877,6 +987,10 @@ async function createRemoteStorage(storageProvider, client_id) { //Need to speci
     else if (storageProvider.toLowerCase() === "onedrive") {
         let onedriveStorage = new OneDriveStorage(client_id);
         return onedriveStorage;
+    }
+    else if (storageProvider.toLowerCase() === "mock") {
+        let mockStorage = new MockStorage(client_id);
+        return mockStorage;
     }
     else {
         throw "No such storage provider";
