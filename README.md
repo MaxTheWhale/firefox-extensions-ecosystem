@@ -24,6 +24,9 @@ Click "Create".
 - Save the changes.
 - The Application Id will be shown near the top of the page. Use this ID when calling `createRemoteStorage`.
 
+## Manifest
+The library requires the `identity` permission to be given in `manifest.json`. In addition, Google Drive requires the permissions `*://www.googleapis.com/*` and `*://accounts.google.com/*` to be given to prevent CORS errors.
+
 ## Testing
 There is an extension in the test folder. It can be loaded in Firefox and will run through a series of tests for each cloud provider when the extension's icon is clicked.
 
