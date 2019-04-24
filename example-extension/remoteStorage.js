@@ -55,7 +55,7 @@ class GoogleStorage {
     constructor(client_id) {
     // PRIVATE PROPERTIES
         const REDIRECT_URL = browser.identity.getRedirectURL();
-        let scopes = ["openid", "email", "profile", "https://www.googleapis.com/auth/drive.file"];
+        let scopes = ["openid", "email", "profile", "https://www.googleapis.com/auth/drive"];
         let auth_url =
       `https://accounts.google.com/o/oauth2/auth?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(" "))}`;
         let validation_url = "https://www.googleapis.com/oauth2/v3/tokeninfo";
@@ -298,7 +298,7 @@ class GoogleStorage {
             let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`);
             let requestHeaders = new Headers();
             requestHeaders.append("Authorization", "Bearer " + accessToken);
-            requestURL += `&parents+in+'${parentID}'`;
+            requestURL += `&parents='${parentID}'`;
             let driveRequest = new Request(requestURL, {
                 method: "GET",
                 headers: requestHeaders
@@ -357,7 +357,7 @@ class GoogleStorage {
             await checkToken(false);
         };
 
-        this.initFolder = async () => { //New app flag indicates folder hasn't been created for app yet
+        this.initFolder = async () => {
             let apiFolderName = "storage.remote";
             await checkToken(false);
             let initFlag = false;
@@ -396,7 +396,8 @@ class GoogleStorage {
             let id;
             let overwriting = true;
             try {
-                id = await getFileID(token, name, parentID);
+                //TODO: Look into why this isn't being restricted to the folder it is in
+                id = await getFileID(token, name, parentID); //FIX: replace with getItems and fetch ID from there
             } catch (error) {
                 id = await getID(token);
                 overwriting = false;
