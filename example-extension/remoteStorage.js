@@ -135,7 +135,7 @@ class GoogleStorage {
             let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${name}'`);
             let requestHeaders = new Headers();
             requestHeaders.append("Authorization", "Bearer " + accessToken);
-            requestURL += `&parents+in+'${parentID}'`;
+            if (parentID) requestURL += `&parents+in+'${parentID}'`;
             let driveRequest = new Request(requestURL, {
                 method: "GET",
                 headers: requestHeaders
@@ -175,7 +175,10 @@ class GoogleStorage {
                         "id": `${id}`,
                         "name": `${name}`,
                         "mimeType": "application/vnd.google-apps.folder",
-                        "parents": [`${parentID}`]
+                        "parents": [`${parentID}`],
+                        "appProperties": {
+                            "remoteStorage": `${REDIRECT_URL}`
+                        }
                     };
                 }
                 let driveRequest = new Request(requestURL, {
@@ -210,7 +213,10 @@ class GoogleStorage {
                     request = {
                         "id": `${id}`,
                         "name": `${name}`,
-                        "parents": [`${parent}`]
+                        "parents": [`${parent}`],
+                        "appProperties": {
+                            "remoteStorage": `${REDIRECT_URL}`
+                        }
                     };
                     requestURL += "?uploadType=resumable";
                 }
@@ -254,8 +260,8 @@ class GoogleStorage {
             }
         }
 
-        async function getMetadata(accessToken, id) {
-            let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?fields=files(kind,id,mimeType,name,parents)`;
+        async function getMetadata(accessToken, id, parentID) {
+            let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?fields=files(kind,id,mimeType,name)&q= '${parentID}' in parents and appProperties has {key='remoteStorage' and value='${REDIRECT_URL}'}`;
             let requestHeaders = new Headers();
             requestHeaders.append("Authorization", "Bearer " + accessToken);
 
@@ -270,30 +276,6 @@ class GoogleStorage {
             }
             else {
                 console.log("Getting Metadata failed: " + response.status);
-                throw response.status;
-            }
-        }
-
-        async function getFileID(accessToken, fileName, parentID) {
-            let requestURL = new URL(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`);
-            let requestHeaders = new Headers();
-            requestHeaders.append("Authorization", "Bearer " + accessToken);
-            requestURL += `&parents+in+'${parentID}'`;
-            let driveRequest = new Request(requestURL, {
-                method: "GET",
-                headers: requestHeaders
-            });
-    
-            let response = await fetch(driveRequest);
-            if (response.ok) {
-                let res = await response.json();
-                if (res.files[0] !== undefined) {
-                    return res.files[0].id;
-                }
-                else throw "No such file";
-            }
-            else {
-                console.log("File search failed: " + response.status);
                 throw response.status;
             }
         }
@@ -342,7 +324,7 @@ class GoogleStorage {
             await checkToken(false);
             let initFlag = false;
             try {
-                apiFolderID = await getFileID(token, apiFolderName, appFolderID);
+                apiFolderID = await getFolderID(token, apiFolderName);
             } catch (error) {
                 apiFolderID = await getID(token);
                 try {
@@ -374,8 +356,8 @@ class GoogleStorage {
             let result = await this.getItems(false, parentID);
             if (result[fileName]) id = result[fileName].id;
             else {
-                    id = await getID(token);
-                    overwriting = false;
+                id = await getID(token);
+                overwriting = false;
             }
             try {
                 let response = await initUpload(token, file, fileName, id, overwriting, parentID);
@@ -394,7 +376,7 @@ class GoogleStorage {
                 let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
                 return await download(token, requestURL);
             } else {
-                throw "Download Failed: File not Found"
+                throw "Download Failed: File not Found";
             }
         };
 
@@ -408,7 +390,7 @@ class GoogleStorage {
                 let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
                 return await gdelete(token, requestURL);
             } else {
-                throw "Delete Failed: File not Found"
+                throw "Delete Failed: File not Found";
             }
         };
 
@@ -430,29 +412,23 @@ class GoogleStorage {
             await checkToken(false);
             if (!parentID) parentID = appFolderID;  
             try {
-                let list = await getMetadata(token, "");
+                let list = await getMetadata(token, "", parentID);
                 let items = [];
                 let result = [];
                 list.files.forEach(file => {
                     if (folderFlag) {
-                        if (file.mimeType === "application/vnd.google-apps.folder" && file.parents !== undefined) {
+                        if (file.mimeType === "application/vnd.google-apps.folder") {
                             items[file.id] = file;
                         }
                     } else {
-                        if (file.mimeType !== "application/vnd.google-apps.folder" && file.parents !== undefined) {
+                        if (file.mimeType !== "application/vnd.google-apps.folder") {
                             items[file.id] = file;
                         }
                     }
                 });
                 for (let i in items) { //For all folders in folders
-                    let flag = false;
-                    if (items[i].parents.includes(parentID)) {
-                        flag = true;
-                    }
-                    if (flag) {
-                        if (folderFlag) result[i] = new Folder(items[i].id, items[i].name, "google"); //Add i to result
-                        else result[i] = new StoreFile(items[i].id, items[i].name, items[i].mimeType, "google");
-                    }
+                    if (folderFlag) result[i] = new Folder(items[i].id, items[i].name, "google"); //Add i to result
+                    else result[i] = new StoreFile(items[i].id, items[i].name, items[i].mimeType, "google");
                 }
                 let returns = []; //Flips list so folders are referred to by name instead of id
                 for (let i in result) {
