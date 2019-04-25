@@ -9,7 +9,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "node ./test/unit/test.js"
+    "instrument": "npx nyc instrument ./src ./output && shx cp ./src/remoteStorage.js ./src/remoteStorage.bak && shx cp ./output/remoteStorage.js ./src/remoteStorage.js",
+    "deinstrument": "shx cp ./src/remoteStorage.bak ./src/remoteStorage.js && shx rm ./src/remoteStorage.bak && shx rm -r ./output",
+    "test": "npm run instrument && nyc node ./test/unit/test.js && npm run deinstrument"
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +24,8 @@
     "esm": "^3.2.22",
     "fetch-mock": "^7.3.1",
     "jasmine": "^3.4.0",
-    "node-fetch": "^2.3.0"
+    "node-fetch": "^2.3.0",
+    "nyc": "^14.0.0",
+    "shx": "^0.3.2"
   }
 }
