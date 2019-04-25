@@ -2,7 +2,7 @@ import {getGoogleStore, getOneDriveStore} from "./SpecHelper.js";
 
 describe("Google Drive", () => {
     let timeOut = 30000;
-    let largeTimeOut = 20000;
+    let largeTimeOut = 40000;
     let remoteStore;
     let error;
     let result;
@@ -21,7 +21,21 @@ describe("Google Drive", () => {
     });
 
     afterAll(async () => {
-        const fileList = ["uploadTest.txt", "downloadTest.txt", "infoTest1.txt", "infoTest2.txt", "overwriteTest.txt", "largeUploadTest.png", "largeDownloadTest.png", "子曰ٱلرَّحِيمِ.txt", "folderCreateTest", "listFileTest.txt", "listFolderTest", "folderUploadTest", "folderDownloadTest", "folderDeleteTest", "subFolderListTest"];
+        const fileList = ["uploadTest.txt", 
+        "downloadTest.txt", 
+        "infoTest1.txt", 
+        "infoTest2.txt", 
+        "overwriteTest.txt", 
+        "largeUploadTest.png", 
+        "largeDownloadTest.png", 
+        "子曰ٱلرَّحِيمِ.txt", 
+        "folderCreateTest", 
+        "listFileTest.txt", 
+        "listFolderTest", 
+        "folderUploadTest", 
+        "folderDownloadTest", 
+        "folderDeleteTest", 
+        "subFolderListTest"];
         for (let i in fileList) {
             try {
                 await remoteStore.deleteFile(fileList[i]);
@@ -103,7 +117,7 @@ describe("Google Drive", () => {
         expect(error).not.toBeDefined();
     }, timeOut);
 
-    xit("Should be able to upload a large file", async () => {
+    it("Should be able to upload a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -115,7 +129,7 @@ describe("Google Drive", () => {
         expect(error).not.toBeDefined();
     }, largeTimeOut);
 
-    xit("Should be able to download a large file", async () => {
+    it("Should be able to download a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -341,7 +355,7 @@ describe("OneDrive", () => {
         expect(error).not.toBeDefined();
     }, timeOut);
 
-    xit("Should be able to upload a large file", async () => {
+    it("Should be able to upload a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();
@@ -353,7 +367,7 @@ describe("OneDrive", () => {
         expect(error).not.toBeDefined();
     }, largeTimeOut);
 
-    xit("Should be able to download a large file", async () => {
+    it("Should be able to download a large file", async () => {
         try {
             file = await fetch("large_file.png");
             fileBlob = await file.blob();

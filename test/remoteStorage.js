@@ -55,7 +55,7 @@ class GoogleStorage {
     constructor(client_id) {
     // PRIVATE PROPERTIES
         const REDIRECT_URL = browser.identity.getRedirectURL();
-        let scopes = ["openid", "email", "profile", "https://www.googleapis.com/auth/drive.file"];
+        let scopes = ["openid", "email", "profile", "https://www.googleapis.com/auth/drive"];
         let auth_url =
       `https://accounts.google.com/o/oauth2/auth?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(" "))}`;
         let validation_url = "https://www.googleapis.com/oauth2/v3/tokeninfo";
@@ -255,27 +255,7 @@ class GoogleStorage {
         }
 
         async function getMetadata(accessToken, id) {
-            let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
-            let requestHeaders = new Headers();
-            requestHeaders.append("Authorization", "Bearer " + accessToken);
-
-            let driveRequest = new Request(requestURL, {
-                method: "GET",
-                headers: requestHeaders
-            });
-    
-            let response = await fetch(driveRequest);
-            if (response.ok) {
-                return response.json();
-            }
-            else {
-                console.log("Getting Metadata failed: " + response.status);
-                throw response.status;
-            }
-        }
-    
-        async function getParents(accessToken, id) {
-            let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?fields=parents`;
+            let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?fields=files(kind,id,mimeType,name,parents)`;
             let requestHeaders = new Headers();
             requestHeaders.append("Authorization", "Bearer " + accessToken);
 
@@ -383,26 +363,22 @@ class GoogleStorage {
                 } catch (error) {
                     throw error;
                 }
-            } /*else {
-        if (newAppFlag) throw "App name already taken, please choose a new one";
-      }*/
+            }
         };
 
-        this.uploadFile = async (file, name, parentID) => {
+        this.uploadFile = async (file, fileName, parentID) => {
             await checkToken(false);
             if (!parentID) parentID = appFolderID;
-            //let files = await this.getItems(false, parentID);
-            //if (files[name] != null) throw `Provided name: ${name} already in use in this directory`
             let id;
             let overwriting = true;
-            try {
-                id = await getFileID(token, name, parentID);
-            } catch (error) {
-                id = await getID(token);
-                overwriting = false;
+            let result = await this.getItems(false, parentID);
+            if (result[fileName]) id = result[fileName].id;
+            else {
+                    id = await getID(token);
+                    overwriting = false;
             }
             try {
-                let response = await initUpload(token, file, name, id, overwriting, parentID);
+                let response = await initUpload(token, file, fileName, id, overwriting, parentID);
                 return await upload(token, file, response.headers.get("location"));
             } catch (error) {
                 throw error;
@@ -412,24 +388,27 @@ class GoogleStorage {
         this.downloadFile = async (fileName, parentID) => {
             await checkToken(false);
             if (!parentID) parentID = appFolderID;
-            try {
-                let id = await getFileID(token, fileName, parentID);
+            let result = await this.getItems(false, parentID);
+            if (result[fileName]) {
+                let id = result[fileName].id;
                 let requestURL = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
                 return await download(token, requestURL);
-            } catch (error) {
-                throw error;
+            } else {
+                throw "Download Failed: File not Found"
             }
         };
 
         this.deleteFile = async (fileName, parentID) => {
             await checkToken(false);
             if (!parentID) parentID = appFolderID;
-            try {
-                let id = await getFileID(token, fileName, parentID);
+            let result = await this.getItems(false, parentID);
+            if (!result[fileName]) result = await this.getItems(true, parentID); //If no file with name, look for folder
+            if (result[fileName]) {
+                let id = result[fileName].id;
                 let requestURL = `https://www.googleapis.com/drive/v3/files/${id}`;
                 return await gdelete(token, requestURL);
-            } catch (error) {
-                throw error;
+            } else {
+                throw "Delete Failed: File not Found"
             }
         };
 
@@ -447,46 +426,39 @@ class GoogleStorage {
             }
         };
 
-        this.getItems = async(folderFlag, parentID) => { //Returns item accessed by ids, may want to flip before returning so entries accessed by name
+        this.getItems = async(folderFlag, parentID) => {
             await checkToken(false);
-            if (!parentID) parentID = appFolderID;
+            if (!parentID) parentID = appFolderID;  
             try {
                 let list = await getMetadata(token, "");
                 let items = [];
                 let result = [];
-                let pars = [];
                 list.files.forEach(file => {
                     if (folderFlag) {
-                        if (file.mimeType === "application/vnd.google-apps.folder") {
+                        if (file.mimeType === "application/vnd.google-apps.folder" && file.parents !== undefined) {
                             items[file.id] = file;
                         }
                     } else {
-                        if (file.mimeType !== "application/vnd.google-apps.folder") {
+                        if (file.mimeType !== "application/vnd.google-apps.folder" && file.parents !== undefined) {
                             items[file.id] = file;
                         }
                     }
                 });
-                // result[appFolderID] = new Folder(folders[appFolderID].id, folders[appFolderID].name); //Ensures all folders added are children of isolated folder
-                for (let i in items) { //Potential for better performance by modifying the getMetadata call to get all fields and parents at once, would remove second call to drive
-                    pars[i] = await getParents(token, i);
-                }
                 for (let i in items) { //For all folders in folders
                     let flag = false;
-                    // console.log(folders[i].name);
-                    if (pars[i].parents.includes(parentID)) {
+                    if (items[i].parents.includes(parentID)) {
                         flag = true;
                     }
                     if (flag) {
                         if (folderFlag) result[i] = new Folder(items[i].id, items[i].name, "google"); //Add i to result
                         else result[i] = new StoreFile(items[i].id, items[i].name, items[i].mimeType, "google");
-                        // delete folders[i];
                     }
                 }
                 let returns = []; //Flips list so folders are referred to by name instead of id
                 for (let i in result) {
                     returns[result[i].name] = result[i];
-                }
-                return returns; //Could return tuple of result and aprents to indicate which file is a child of which folders
+                } 
+                return returns;
             } catch (error) {
                 throw error;
             }
