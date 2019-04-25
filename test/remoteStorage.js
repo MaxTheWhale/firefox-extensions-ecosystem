@@ -941,19 +941,7 @@ class MockStorage {
 async function createRemoteStorage(storageProvider, client_id) { //Need to specify in documentation, will give directory
     if (storageProvider.toLowerCase() === "google") {
         let googleStorage = new GoogleStorage(client_id);
-        await googleStorage.initFolder(); //New app flag may be pointless
-        // //test code
-        // let result = await googleStorage.getItems('', true); //Slow here
-        // for (let i in result) {
-        //   // await googleStorage.createFolder(result[i].id, 'Test'); //Slow here
-        //   console.log(i);
-        // }
-        // await googleStorage.uploadFile('Test', 'Test.txt', result['HelloWorld'].id);
-        // let result2 = await googleStorage.getItems(result['HelloWorld'].id, false); //Slow here
-        // for (let i in result2) {
-        //   console.log(i);
-        // }
-        // //test code
+        await googleStorage.initFolder();
         return googleStorage;
     }
     else if (storageProvider.toLowerCase() === "onedrive") {
