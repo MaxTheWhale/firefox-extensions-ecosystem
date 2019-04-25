@@ -11,7 +11,9 @@
   "scripts": {
     "instrument": "npx nyc instrument ./src ./output && shx cp ./src/remoteStorage.js ./src/remoteStorage.bak && shx cp ./output/remoteStorage.js ./src/remoteStorage.js",
     "deinstrument": "shx cp ./src/remoteStorage.bak ./src/remoteStorage.js && shx rm ./src/remoteStorage.bak && shx rm -r ./output",
-    "test": "npm run instrument && nyc node ./test/unit/test.js && npm run deinstrument"
+    "runtest": "nyc --instrument false node ./test/unit/test.js",
+    "test": "npm-run-all -c \"instrument --silent\" runtest \"deinstrument --silent\" --silent",
+    "copysrc": "shx cp ./src/remoteStorage.js ./test/remoteStorage.js && shx cp ./src/remoteStorage.js ./example-extension/remoteStorage.js"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +27,7 @@
     "fetch-mock": "^7.3.1",
     "jasmine": "^3.4.0",
     "node-fetch": "^2.3.0",
+    "npm-run-all": "^4.1.5",
     "nyc": "^14.0.0",
     "shx": "^0.3.2"
   }

@@ -399,7 +399,7 @@ class GoogleStorage {
             if (!parentID) parentID = appFolderID;
             if (folderName === "") throw "Please provide a name for the folder";
             let folders = await this.getItems(true, parentID);
-            if (folders[folderName] != null) throw `Provided name: ${name} already in use in this directory`;
+            if (folders[folderName] != null) throw `Provided name: ${folderName} already in use in this directory`;
             try {
                 let id = await getID(token);
                 await initFolder(token, folderName, id, parentID, false);
