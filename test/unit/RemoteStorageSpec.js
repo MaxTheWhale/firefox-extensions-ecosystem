@@ -1,5 +1,6 @@
 import {getGoogleStore, getOneDriveStore, getMockStore} from "./SpecHelper.js";
 const fetchMock = require("fetch-mock");
+fetchMock.config.overwriteRoutes = true;
 
 describe("Google Drive", () => {
     let remoteStore;
@@ -22,7 +23,7 @@ describe("Google Drive", () => {
 
     it("Should be able to complete an upload without error", async () => {    //Fails when error is thrown
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='uploadTest.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/generateIds?count=1", { body: { ids: ["1235"] }, status: 200});
             fetchMock.post("https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable", { headers: { location: "https://uploadTest.txt" }, status: 200});
             fetchMock.put("https://uploadTest.txt", 200);
@@ -37,7 +38,7 @@ describe("Google Drive", () => {
     
     it("Should be able to complete a download without error", async () => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='downloadTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [{ name: "downloadTest.txt", id: "1235", parents: ["1234"] }] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?alt=media", { body: "This is a download test", status: 200 });
 
             result = await remoteStore.downloadFile("downloadTest.txt");
@@ -51,11 +52,13 @@ describe("Google Drive", () => {
 
     it("Should be able to delete a file without error", async () => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='deleteTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [{ name: "deleteTest.txt", id: "1235", parents: ["1234"] }] }, status: 200 });
+            //fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='deleteTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
             fetchMock.delete("https://www.googleapis.com/drive/v3/files/1235", 201);
-            fetchMock.get("https://www.googleapis.com/drive/v3/files/", { body: { files: [] }, status: 200 });
 
             await remoteStore.deleteFile("deleteTest.txt");
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [] }, status: 200 });
+
             result = await remoteStore.getInfo();
         } catch(e) {
             error = e;
@@ -66,8 +69,7 @@ describe("Google Drive", () => {
 
     it("Should be able to get correct file's info", async () => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files/", { body: { files: [{ id: "1235", name: "infoTest1.txt", mimeType: "text/plain", kind: "drive#file" }] }, status: 200 });
-            fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?fields=parents", { body: { parents: ["1234"] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [{ name: "infoTest1.txt", id: "1235", parents: ["1234"], mimeType: "text/plain" }] }, status: 200 });
 
             result = await remoteStore.getInfo("infoTest1.txt");
         } catch(e) {
@@ -80,8 +82,8 @@ describe("Google Drive", () => {
 
     it ("Should be able to get all files info", async () => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files/", { body: { files: [{ id: "1235", name: "infoTest2.txt", mimeType: "text/plain", kind: "drive#file" }] }, status: 200 });
-            fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?fields=parents", { body: { parents: ["1234"] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [{ name: "infoTest2.txt", id: "1235", parents: ["1234"], mimeType: "text/plain" }] }, status: 200 });
+
             result = await remoteStore.getInfo();
         } catch(e) {
             error = e;
@@ -94,7 +96,7 @@ describe("Google Drive", () => {
 
     it("Should be able to overwrite a file", async () => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='overwriteTest.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [{ name: "overwriteTest.txt", id: "1235", parents: ["1234"] }] }, status: 200 });
             fetchMock.patch("https://www.googleapis.com/upload/drive/v3/files/1235?uploadType=resumable", { headers: { location: "https://overwriteTest.txt" }, status: 200});
             fetchMock.put("https://overwriteTest.txt", 200);
 
@@ -108,7 +110,7 @@ describe("Google Drive", () => {
 
     it("Should support unicode filename upload", async () => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='子曰ٱلرَّحِيمِ.txt'&parents+in+'1234'", { body: { files: [] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/generateIds?count=1", { body: { ids: ["1235"] }, status: 200});
             fetchMock.post("https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable", { headers: { location: "https://unicodeTest.txt" }, status: 200});
             fetchMock.put("https://unicodeTest.txt", 200);
@@ -123,7 +125,7 @@ describe("Google Drive", () => {
 
     it("Should support unicode filename download", async () => {
         try {
-            fetchMock.get("https://www.googleapis.com/drive/v3/files?q=name='子曰ٱلرَّحِيمِ.txt'&parents+in+'1234'", { body: { files: [{ id: "1235" }] }, status: 200 });
+            fetchMock.get("https://www.googleapis.com/drive/v3/files/?fields=files(kind,id,mimeType,name,parents)", { body: { files: [{ name: "子曰ٱلرَّحِيمِ.txt", id: "1235", parents: ["1234"] }] }, status: 200 });
             fetchMock.get("https://www.googleapis.com/drive/v3/files/1235?alt=media", { body: "This is a unicode name test", status: 200 });
 
             result = await remoteStore.downloadFile("子曰ٱلرَّحِيمِ.txt");
