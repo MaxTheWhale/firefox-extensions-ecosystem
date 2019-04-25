@@ -1,4 +1,5 @@
 import {getGoogleStore, getOneDriveStore, getMockStore} from "./SpecHelper.js";
+import { EROFS } from "constants";
 const fetchMock = require("fetch-mock");
 fetchMock.config.overwriteRoutes = true;
 
@@ -517,7 +518,7 @@ describe("Mock Provider", () => {
 
     it("Should be able to complete an upload without error", async () => {
         try {
-            result = await remoteStore.uploadFile("This is and upload test.", "uploadTest.txt");
+            result = await remoteStore.uploadFile("This is an upload test", "uploadTest.txt");
         } catch(e) {
             error = e;
         }
@@ -680,6 +681,97 @@ describe("Mock Provider", () => {
         expect(result["subFolderListTest.txt"].id).toBeDefined();
         expect(result["subFolderListTest.txt"].name).toEqual("subFolderListTest.txt");
         expect(result["subFolderListTest.txt"].store).toEqual("mock");
+    });
+
+    it("Should throw on invalid parent ID when uploading", async () => {
+        try {
+            await remoteStore.uploadFile("This is an upload test", "uploadTest.txt", "invalid");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such folder");
+    });
+
+    it("Should throw on non-existent file when downloading", async () => {
+        try {
+            await remoteStore.downloadFile("errorTest.txt");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such file");
+    });
+
+    it("Should throw on invalid parent ID when downloading", async () => {
+        try {
+            await remoteStore.downloadFile("errorTest.txt", "invalid");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such folder");
+    });
+
+    it("Should throw on non-existent file when deleting", async () => {
+        try {
+            await remoteStore.deleteFile("errorTest.txt");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such file");
+    });
+
+    it("Should throw on invalid parent ID when deleting", async () => {
+        try {
+            await remoteStore.deleteFile("errorTest.txt", "invalid");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such folder");
+    });
+
+    it("Should throw on invalid parent ID when creating folder", async () => {
+        try {
+            await remoteStore.createFolder("errorTest", "invalid");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such folder");
+    });
+
+    it("Should throw if trying to overwrite folder", async () => {
+        try {
+            await remoteStore.createFolder("folderOverwriteTest");
+            await remoteStore.createFolder("folderOverwriteTest");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("Folder already exists");
+    });
+
+    it("Should throw on invalid parent ID when getting items", async () => {
+        try {
+            await remoteStore.getItems(false, "invalid");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such folder");
+    });
+
+    it("Should throw if getting info for non-existent file", async () => {
+        try {
+            await remoteStore.getInfo("getInfoErrorTest.txt");
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toBeDefined();
+        expect(error).toEqual("No such file");
     });
 
     it("Should support unicode filenames", async () => {
