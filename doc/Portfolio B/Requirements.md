@@ -1,13 +1,13 @@
 # Requirements
 ## Stakeholders 
 - Browser extension users: The final users of our product, wrapped in other extensions
-- Cloud providers: Direct users of the API
-- Firefox developers: Possible users of the API
-- Rob Wu: Project director
-- Luca Greca: Project director
+- Cloud providers: Provide the cloud-storage services that our API will interface with
+- Extension developers: Direct users of the API when developing extensions that interact with it
+- Rob Wu and Luca Greca: Project directors, providing support and guidance during development of the product
+- Mozilla: 
 
 ## Use-case Diagram
-![use-case diagram](use-case%20diagram.jpg)
+![Use-case Diagram](use_case_diagram.png)
 
 ## Flow Steps
 ### Storing a file to a cloud
@@ -70,12 +70,11 @@ If the token fails to verify, ask for another log in.
 
 ## Requirements
 ### Functional Requirements
-1.	Shall provide functions to store, delete and fetch files from cloud.
-2.	Shall lift the cap of data that can be stored by 'storage.local'.
-3.	Shall be an interface viable to all cloud providers, i.e. Google Drive, OneDrive, etc.
-4.	Shall at least mimic functions currently exist in 'Browser.storage.local', potentially implement more features.
-5.	The repository needs to be repeatedly accessible despite any situations happen to the system.
-6.  Shall proceed an authentication check before making any actions to the cloud.
+1.  Must allow users to authenticate with the cloud-provider.
+1.	Must provide functions to store, fetch and delete files from the cloud storage.
+1.  Must prevent extensions from interfering with the user's own files or files from other extensions.
+1.	Must allow storing more than the 5MB limit currently offered by the `storage.local` API.
+1.	The interface provided by the library should be entirely cloud-provider independent. Any differences between providers should be handled by the library.
 
 ### Non-Functional Requirements
 1.	Should ensure secure data transmission.
