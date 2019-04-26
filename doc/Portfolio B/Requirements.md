@@ -77,17 +77,22 @@ If the download request fails for any reason, return unsuccessfully with the err
 
 ## Requirements
 ### Functional Requirements
-1.  Must allow users to authenticate with the cloud-provider.
-1.	Must provide functions to store, fetch and delete files from the cloud storage.
-1.  Must prevent extensions from interfering with the user's own files or files from other extensions.
-1.	Must allow storing more than the 5MB limit currently offered by the `storage.local` API.
-1.	The interface provided by the library should be entirely cloud-provider independent. Any differences between providers should be handled by the library.
+**RS-1.1**  *Must* be implemented as a JavaScript library.<br>
+**RS-1.2**  *Must* provide a function to **authenticate** with a specified cloud provider.<br>
+**RS-1.3**	*Must* provide a function to **upload** a file to the cloud storage with a given file name.<br>
+**RS-1.4**	*Must* provide a function to **download** a file from the cloud storage given the file name.<br>
+**RS-1.5**	*Must* provide a function to **delete** a file to from the cloud storage given the file name.<br>
+**RS-1.6**  *Must* prevent extensions from interfering with the user's own files on the cloud storage.<br>
+**RS-1.7**  *Must* prevent extensions from interfering with files from other extensions on the cloud storage.<br>
+**RS-1.8**	*Must* allow storing more than the 5MB limit currently offered by the `storage.local` API.<br>
+**RS-1.9**	The interface provided by the library *should* be entirely cloud-provider independent. Any differences between providers should be handled by the library.<br>
 
 ### Non-Functional Requirements
-1.	Should ensure secure data transmission.
-2.	Should be implemented using Javascript.
-3.	Should minimise the operations needed between instructions given and doing the actual upload/download processes.
-4.	Require permission/confirmation from users when critical actions are called.
-5.	Need plenty of explanations in code and/or maybe example codes so that developers can understand it easier. 
-6. The solution should feel consistent with how other APIs in Firefox behave
+**RS-2.1**	*Should* make use of modern ES6+ JavaScript features, specifically `async`, `await` syntax.<br>
+**RS-2.2**  *Should* have well-commented code to ease future development.<br>
+**RS-2.3**  *Should* be well tested.<br>
+**RS-2.4**  How to run and write tests *should* be well documented.<br>
+**RS-2.5**	*Should* include documentation detailing how to make use of the library.<br>
+**RS-2.6**	*Should* make the minimum number of HTTP requests needed to implement the desired functionality.<br>
+**RS-2.7**	*Should* require as few extension permissions as possible to operate.<br>
 
