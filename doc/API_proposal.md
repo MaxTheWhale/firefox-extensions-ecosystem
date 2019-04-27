@@ -84,7 +84,7 @@ interface. The following methods are available:
 Note that all the methods have an optional `parentID` parameter. This can be supplied with a folder ID (obtained using `getItems(true)`) to allow the operation to take place within a specific folder. If the argument is omitted, the operation will take place in the extension's root folder.
 
 ## Limitations
-- Google Drive requires the permissions `*://www.googleapis.com/*` and `*://accounts.google.com/*` to be given in the manifest, or else authentication will fail due to CORS errors.
+- Google Drive requires the permission `*://www.googleapis.com/*` to be given in the manifest, or else authentication will fail due to CORS errors.
 - OneDrive currently only supports uploads up to 60MB. This could be bypassed using multi-part uploads, but this is not currently implemented.
 - OneDrive authentication currently needs to be performed every time the extension runs, as the session is not remembered due to some unknown issue.
 - OneDrive does not support the permissions to only allow the extension to access files it creates. This could create the potential risk to modify the users other files on the cloud, although the library has been designed in a way that extensions' data is kept isolated.

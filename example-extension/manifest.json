@@ -26,7 +26,6 @@
     "activeTab",
     "identity",
     "storage",
-    "*://accounts.google.com/*",
     "*://www.googleapis.com/*"
   ]
 

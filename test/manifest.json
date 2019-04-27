@@ -5,7 +5,7 @@
     "browser_action": {
       "default_title": "Remote Storage Test"
     },
-    "permissions": ["identity", "tabs", "*://www.googleapis.com/*", "*://accounts.google.com/*"],
+    "permissions": ["identity", "tabs", "*://www.googleapis.com/*"],
     "background": {
       "scripts": [ "background.js" ]
     },
