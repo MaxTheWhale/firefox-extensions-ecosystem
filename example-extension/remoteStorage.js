@@ -430,7 +430,7 @@ class GoogleStorage {
                     if (folderFlag) result[i] = new Folder(items[i].id, items[i].name, "google"); //Add i to result
                     else result[i] = new StoreFile(items[i].id, items[i].name, items[i].mimeType, "google");
                 }
-                let returns = []; //Flips list so folders are referred to by name instead of id
+                let returns = {}; //Flips list so folders are referred to by name instead of id
                 for (let i in result) {
                     returns[result[i].name] = result[i];
                 } 
