@@ -70,7 +70,7 @@ The API defines two helper classes for passing file and folder information.
 
 ## Methods
 The API provides classes for each cloud storage provider that are used as the
-interface. The following methods are available:
+interface. All of the methods are asynchronous, meaning they return a Promise. Therefore it is recommended to call the methods with the `await` keyword from within an `async` function, to make sure the method completes before continuing. The following methods are available:
 
 | Method    | Description | Returns |
 |-----------|-------------|---------|
