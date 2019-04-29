@@ -1,6 +1,6 @@
 # Development Testing
 
-(Brief summary of system architecture from previous section)
+As can be seen from the previous section, our API is primarily contained in one class, with all of its functionality relying on the APIs ability to communicate with external services that we have no control over. This situation has resulted in our unit tests primarily focusing on testing our system in isolation from these external services, while the integration tests ensure our system works correctly when communicating with these services.
 
 ## Testing API
 When creating the tests for our API we have two strict sets of tests, in the form of our unit tests and our integration tests. The main reason for this separation was to ensure that the basic logic of our API could be verified without relying on the functionality of the external services it connects to.
