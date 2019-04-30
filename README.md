@@ -11,6 +11,11 @@ In order to register your extension with cloud storages, you will need to get th
 ### Registering with cloud providers
 #### Google Drive
 - Visit https://console.developers.google.com/apis/credentials
+- Visit OAuth Consent Screen
+- Give your application a name
+- Add the scopes "../auth/drive.metadata.readonly " and "../auth/drive.file"
+- Then, paste your redirect URL into the authorised domain section.
+- Go back to the main credentials page.
 - Click "Create credentials", and select "OAuth client ID".
 - Select "Web application", and give it a name. The name is shown to the user to help them understand whether to authorize the add-on.
 - Paste the redirect URL into the "Authorized redirect URIs" box.

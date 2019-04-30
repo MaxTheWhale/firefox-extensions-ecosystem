@@ -55,7 +55,7 @@ class GoogleStorage {
     constructor(client_id) {
     // PRIVATE PROPERTIES
         const REDIRECT_URL = browser.identity.getRedirectURL();
-        let scopes = ["openid", "email", "profile", "https://www.googleapis.com/auth/drive"];
+        let scopes = ["openid", "email", "profile", "https://www.googleapis.com/auth/drive.metadata.readonly", "https://www.googleapis.com/auth/drive.file"];
         let auth_url =
       `https://accounts.google.com/o/oauth2/auth?client_id=${client_id}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&scope=${encodeURIComponent(scopes.join(" "))}`;
         let validation_url = "https://www.googleapis.com/oauth2/v3/tokeninfo";
