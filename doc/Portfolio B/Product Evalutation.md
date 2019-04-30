@@ -1,0 +1,13 @@
+# Product Evaluation
+
+## Questionnaire
+
+We decided to create a [questionnaire](https://forms.gle/ypXS6h9PMCgs67pw6) to evaluate our product as we felt it would be an easy yet effective way to get a reasonable amount of feedback. When distributing our questionnaire, we focused on users who had experience with JavaScript and got 24 responses. We had them try our API on our test extension and some code of their own. The general opinion on our product seemed to be that it would be very useful in relevant projects that required a web extension to make use of cloud services and our API offers enough features to implement that efficiently. It also seems that the users generally found the API itself easy to use, however some users found registering the API with the cloud providers somewhat difficult. To tackle this problem, we may include a code template for an extension that will allow users who are unfamiliar with developing web extensions to easily gain access to the required information to register our API. Our questionnaire also found that all our users were likely to recommend our API to others.
+
+## Performance testing
+
+We also decided to evaluate the performance of our product, as our API provides a very specific functionality in which efficiency is very important to ensure a quality product. We decided to measure the performance by how much data and how many requests our API sends/receives using a simple test-extension that uses each of our APIs functions once. Measuring the duration of time required to complete an action doesn’t work in this case, as the speed of our API is fully dependent on the user's internet speed.  In running our test extension, to connect to Google Drive our API makes 24 requests, transferring 20kb of data over the course of 10 seconds. When connecting to OneDrive the same extension made 25 requests transferring 40kb of data over 10 seconds. We are relatively satisfied with these numbers, and don’t feel we are sending either an unnecessary number of requests or an unreasonable amount of data.
+
+## Observations
+
+Out of all the users we observed, we found that the most common user complaint we received was how awkward it felt setting up their app with the Google and Microsoft developer consoles. The main issue people seemed to have was retrieving the redirect URI necessary to create the OAUTH 2.0 tokens necessary to connect to the APIs. However, while this step can be awkward it is important to ensure security for people using the apps that make use of our API. Following this feedback we did add to our documentation; giving step-by-step instructions on how to register an app with Google and Microsoft.
