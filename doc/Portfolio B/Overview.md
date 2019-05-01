@@ -34,3 +34,6 @@ functionality as a library, as this will be easier to work with and debug. Then
 after the cloud storage solution is working in this form, we can look at the
 feasibility of implementing it directly into Firefox itself.
 
+### Links
+The GitHub for the project can be found here: https://github.com/MaxTheWhale/firefox-extensions-ecosystem<br>
+The user documentation is contained in the [README](https://github.com/MaxTheWhale/firefox-extensions-ecosystem/blob/master/README.md) and [API Proposal](https://github.com/MaxTheWhale/firefox-extensions-ecosystem/blob/master/doc/API_proposal.md).
