@@ -39,4 +39,4 @@ Specifically, to run these tests visit about:debugging in Firefox. Choose to loa
 - To run integration tests, load the manifest located in the test folder, then click on the new browser action button to run the tests.
 - To run the test extension, load the manifest located in the example-extension folder, then click on the name of either storage provider to begin.
 
-Run `npm test` in the root of the package to run a suite of unit tests. This also includes code coverage checking using `nyc`.
+Run `npm install` to install the node modules required by the unit tests. The tests can then be run using `npm test`. Node v10 or higher is required. The unit tests also include code coverage checking using `nyc`.
