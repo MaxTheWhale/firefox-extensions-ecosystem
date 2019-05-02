@@ -35,10 +35,8 @@ The library requires the `identity` permission to be given in `manifest.json`. I
 ## Testing
 There is an extension in the test folder. It can be loaded in Firefox and will run through a series of tests for each cloud provider when the extension's icon is clicked.
 
-Specifically, to run these tests visit about:debugging in Firefox. Choose to load a temprary extension. 
-<br>
-To run integration tests load the manifest in the test folder, then click on the new browser action button to run the extension.
-<br>
-To run the test extension load the manifest in the example-extension folder, then click on the name of either storage provider to run example.
+Specifically, to run these tests visit about:debugging in Firefox. Choose to load a temporary extension: 
+- To run integration tests, load the manifest located in the test folder, then click on the new browser action button to run the tests.
+- To run the test extension, load the manifest located in the example-extension folder, then click on the name of either storage provider to begin.
 
 Run `npm test` in the root of the package to run a suite of unit tests. This also includes code coverage checking using `nyc`.
